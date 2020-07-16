@@ -1,0 +1,25 @@
+{% extends "ctfoood/base.html" %}
+
+{% block title %}Register{% endblock %}
+{% block content %}
+
+  <h2>Register</h2>
+  <form method="post" id="register_form">
+    {% csrf_token %}
+
+    <p><label for="id_email">&nbsp;&nbsp;&nbsp;Email:</label>
+    <input type="email" placeholder="Optional" id="id_email" name="email">
+    <span class="helptext">Optional, used for password resets.</span>
+
+    {{ form.as_p }}  {# TODO: further restrict username / change the help_text? #}
+
+    {% if recaptcha_sitekey %}
+      <script src="https://www.google.com/recaptcha/api.js"></script>
+      <button class="g-recaptcha" data-sitekey="{{ recaptcha_sitekey }}" data-callback="recaptcha_register_submit" data-action="submit">Register</button>
+    {% else %}
+      <button type="submit">Register</button>
+    {% endif %}
+  </form>
+
+  <p>Note: this registration is separate from the qualifier registrations, and is not used for anything else.
+{% endblock %}

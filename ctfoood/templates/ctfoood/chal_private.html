@@ -1,0 +1,70 @@
+{% extends "ctfoood/base.html" %}
+
+{% block title %}Private view for {{ chal.name }}{% endblock %}
+{% block content %}
+
+{% load admin_urls %}
+<h1>Private view for {{ chal.name }}
+    [<a href="{% url chal_meta|admin_urlname:'change' chal.pk %}">view/edit</a>]</h1>
+
+
+<p><b>Main public checkout:
+{% if chal.public_checkout %}
+    <a href="{{ chal.public_checkout.get_absolute_url }}">{{ chal.public_checkout }}</a>
+{% else %}None{% endif %}</b>
+
+
+
+<h2>Git pulling</h2>
+<code>{{ chal.show_git_clone }}</code>
+
+{% if chal.autopull_url %}
+<form method="POST" id="autopull-form" action="{% url 'autopull' chal.name %}">
+    {% csrf_token %}
+    <input type="checkbox" name="make_public" id="make_public">
+    <label for="make_public">Make the checkout public</label>
+    <input type="checkbox" name="dockerhub" id="dockerhub">
+    <label for="dockerhub" id="dockerhub_label">Push to dockerhub</label>
+    <input type="checkbox" name="as_default" id="as_default">
+    <label for="as_default" id="as_default_label">Make it the new public default</label>
+    <br>
+    <input type="checkbox" name="run_tester" id="run_tester">
+    <label for="run_tester">Run the full <code>./tester</code></label>
+    <input type="submit" value="Pull, build, and create a new checkout object">
+    <br><span style="color: white"><i>Note: waits for the end before showing the output. Run this on an alias that is not behind AWS CloudFront: <a href="https://archive.oooverflow.io">archive.oooverflow.io</a>.</i></span>
+</form>
+{% load static %}
+<script src="{% static "chal_private.js" %}"></script>
+{% endif %}
+
+<p>&nbsp;
+
+
+{# TODO: fancy URL reverser #}
+<h2>Existing checkouts
+    [<a href="{% url 'admin:index' %}{{ chal_meta.app_label }}/chalcheckout/?q={{ chal.name|urlencode }}">view/edit list</a>]</h2>
+
+<h3>Public</h3>
+{% if public_checkouts %}
+    <ul>
+    {% for checkout in public_checkouts %}
+        <li><a href="{{ checkout.get_absolute_url }}">{{ checkout }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    None
+{% endif %}
+
+
+<h3>Private</h3>
+{% if private_checkouts %}
+    <ul>
+    {% for checkout in private_checkouts %}
+        <li><a href="{{ checkout.get_absolute_url }}">{{ checkout }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    None
+{% endif %}
+
+{% endblock %}

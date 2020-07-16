@@ -1,0 +1,16 @@
+TODO:
+   - call delete_stale_files periodically
+
+
+   - golf
+   - time the speedrun
+
+   - async delete_vm and enable it for regular users again
+
+   - replay pcaps
+
+
+create users / etc. via cloud-config?
+install docker separately to provide earlier progress message (but apt-get -qq install docker.io didn't work!)
+
+create swapfile?

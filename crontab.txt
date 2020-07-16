@@ -1,0 +1,2 @@
+# m h  dom mon dow   command
+*/5 *    * * *   ~/archiveooo/env/bin/python3 -u ~/archiveooo/delete_aged_vms.py --log-level=WARNING

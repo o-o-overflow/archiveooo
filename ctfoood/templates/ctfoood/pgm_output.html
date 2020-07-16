@@ -1,0 +1,34 @@
+{% extends "ctfoood/base.html" %}
+
+{% block title %}Result of {{ action }}{% endblock %}
+{% block content %}
+
+{% load admin_urls %}
+
+{% if chal %}
+<h3>Result of {{ action }} on <a href="{{ chal.get_absolute_url }}">{{ chal.name }}</a>
+  {% if user.is_staff %}
+    [<a href="{% url chal_meta|admin_urlname:'change' chal.pk %}">view/edit chal</a>]
+  {% endif %}
+</h3>
+{% endif %}
+
+{% if result %}
+<p><b>Result:
+    <a href="{{ result.get_absolute_url }}">{{ result }}</a>
+    {% if result_meta %}
+    [<a href="{% url result_meta|admin_urlname:'change' result.pk %}">admin</a>]
+    {% endif %}
+</b>{% endif %}
+
+<p>
+{% if errcode != 0 %}<span style="background-color: #b00">{% else %}<span style="color: lightgreen">{% endif %}
+Errcode: {{ errcode }}
+</span></p>
+
+{# TODO: render terminal colors? #}
+<pre>
+{{ output }}
+</pre>
+
+{% endblock %}

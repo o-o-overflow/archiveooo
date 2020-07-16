@@ -1,0 +1,14 @@
+django <= 3.1
+dj-database-url
+django-ipware
+
+pyyaml
+coloredlogs
+markdown
+
+# Optionally, see DATABASES
+#mysqlclient
+psycopg2
+
+# Optionally, to store public files / images
+boto3

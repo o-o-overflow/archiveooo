@@ -1,0 +1,9 @@
+*.pyc
+.pytype
+__pycache__
+/db.sqlite3
+/env
+migrations/
+/public_files
+/dockerimg
+local_settings_outside_git.py

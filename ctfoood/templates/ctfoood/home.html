@@ -1,0 +1,151 @@
+{% extends "ctfoood/base.html" %}
+{% load humanize %}
+
+{% block title %}Welcome{% endblock %}
+{% block content %}
+
+{% load admin_urls %}
+
+<p>Welcome, <a href="https://www.youtube.com/watch?v=G1IbRujko-A" style="color: #eaeaeae6; text-decoration: none;">hackers</a>.
+This is a live, playable archive of DEF CON CTF challenges.
+
+<!--<p>With a dose of dark magic, we spin up past challenges for everyone to enjoy.-->
+<!--<p>You can read more about the <a href="https://oooverflow.io">Order of the Overflow</a>, past editions, and <a href="https://oooverflow.io/philosophy.html">our philosophy</a> on our main site and on <a href="https://defcon.org">DEF CON's</a>.</p>
+-->
+<p>Brought to you by the <a href="https://oooverflow.io">Order of the Overflow</a>, current host of <a href="https://defcon.org">DEF CON</a>'s official CTF.</p>
+
+<div class="warning_notice">
+    <p><b>The archive is in beta.</b>
+    <p>Challenges are not particularly malicious or dangerous, but they are vulnerable by design (that's the game!). Containers isolate them, but <b>it's up to you to play safely</b>.
+    <p>We're archiving more challenges and appreciate <a href="https://github.com/o-o-overflow/archiveooo/issues">issue reports and suggestions</a>, including via <a href="https://discord.gg/defcon">DEF CON's discord</a> (CTF area). Just be mindful that running the finals is tough and has priority. <a href="https://github.com/o-o-overflow/archiveooo/wiki/FAQ">General FAQ</a>
+</div>
+
+
+
+{% if own_vms %}  {# Also see the checkout page #}
+<div class="private_box private_cmds vm_list_box">
+  <p>You have active servers:
+  {% if user.is_staff %}[ <a href="/admin/ctfoood/vm/">admin</a> ]{% endif %}
+  <ul class="vm_list">
+    {% for vm in own_vms %}
+    <form action="{% url "delete_vm" vm.id %}" target="_blank">
+        {% csrf_token %}
+        <li>{{ vm.ip }}:{{ vm.checkout.exposed_port }}
+            for <a href="{{vm.checkout.get_absolute_url}}">{{ vm.checkout.chal.name }}</a>
+            <span style="color: #888;">[ {{ vm.creation_time|naturaltime }} | id={{vm.id}}
+                | <input type="submit" value="delete" onclick="delete_vm_click(event);">
+                ]<br>{{ vm.latest_user_message }}</span>
+            {% if user.is_staff %}[ <a href="{% url "run_test_deployed" vm.id %}" target="_blank">Run tester</a> ]{% endif %}
+        </li></form>
+    {% endfor %}
+  </ul>
+</div>{% endif %}
+
+
+
+{% if own_private_chals %}
+<div class="private_box private_chals own_private_chals">
+Your own private challenges:
+<span class="chal_listing"><ul>
+{% for c in own_private_chals %}
+    <li><a href="{{ c.get_absolute_url }}">{{ c }}</a></li>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if grp_private_chals %}
+<div class="private_box private_chals grp_private_chals">
+Your group's private challenges:
+<span class="chal_listing"><ul>
+{% for c in grp_private_chals %}
+    <li><a href="{{ c.get_absolute_url }}">{{ c }}</a>
+    <span class="point_value">(~{{c.points}} points)</span>
+    </li>
+{% endfor %}
+</div>
+{% endif %}
+
+
+
+
+{# XXX: Also see the user-profile view and template #}
+
+<h1 style="margin-bottom: 0.2em;">Available challenges
+    {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
+</h1>
+
+
+{% if public_chals %}
+<span class="homelist">
+{% for c in public_chals %}
+    <div class="homechal">
+        <span class="format">{{ c.format }}</span><br>
+        <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+        {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
+        <br>
+        <div class="tags hometags">
+        {% for t in c.get_tags %}
+            <span class="tag">{{ t }}</span>
+        {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+</span>
+{% else %}
+There are no public challenges yet. Come back soon!
+{% endif %}
+
+
+{% if user.is_authenticated %}
+<h2 style="margin-top: 0.8em;">Solved</h2>
+{% if solved_chals %}
+<span class="homelist">
+{% for c in solved_chals %}
+    <div class="homechal solved_chal">
+        <span class="format">{{ c.format }}</span><br>
+        <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+        {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
+        <br>
+        <div class="tags hometags">
+        {% for t in c.get_tags %}
+            <span class="tag">{{ t }}</span>
+        {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+{% else %}
+<p>Nothing? :(</p>
+{% endif %}
+{% endif %}
+
+
+
+<h1>Achievements
+    {% if user.is_staff %}[ <a href="/admin/ctfoood/achievement/">Add/edit</a> ]{% endif %}
+</h1>
+
+
+{% if own_achievements %}
+<span class="achievements">
+{% for a in own_achievements %}
+    <div class="achievement own_achievement" title="{{a.text}}">
+        <div class="achievement_name"><b>{{ a.name }}</b></div>
+        <div class="achievement_how">{{ a.how }}</div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+{% if other_achievements %}
+<span class="achievements">
+{% for a in other_achievements %}
+    <div class="achievement not_achievement" title="{{a.text}}">
+        <div class="achievement_name"><b>{{ a.name }}</b></div>
+        <div class="achievement_how">{{ a.how }}</div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+
+
+{% endblock %}
+

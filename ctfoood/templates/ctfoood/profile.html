@@ -1,0 +1,84 @@
+{% extends "ctfoood/base.html" %}
+
+{% block title %}{{ profiled.username }}'s profile{% endblock %}
+{% block content %}
+
+{% load admin_urls %}
+
+
+{% if is_own_profile %}
+<div class="private_box private_cmds">
+    <p>This is your own profile. It's also publicly available under the same URL.
+    <p>Email: {{ profiled.email }}</p>
+    {# TODO: change email, other prefs #}
+    <p>
+    <a href="{% url "password_change" %}">Change password</a> |
+    <a href="{% url "logout" %}">Logout</a>
+</div>
+{% endif %}
+
+
+
+<p>
+Profile for esteemed gentlehacker <a href="/u/{{ profiled.username }}"><b>{{ profiled.username }}</b></a>.
+</p>
+
+<p class="profile_points">Theoretical summed points: <b>{{ profiled_settings.points }}</b><br>
+<div class="points_explanation">Note: During competitions we award points dynamically. Here, we record the value at game-end (for quals) or an estimate (e.g., averaging the attack points scored during finals). This is a cool part of CTF design, and we have a <a href="http://github.com/o-o-overflow/scoring-playground">scoring playground of our own</a>.</div>
+</p>
+
+{# XXX: Also see the homepage #}
+
+<h1>Solved challenges</h1>
+
+
+{% if solved_chals %}
+<span class="chal_listing"><ul>
+{% for c in solved_chals %}
+    <span class="solved_chal">
+    <li>
+    <a href="{{ c.get_absolute_url }}">{{ c.format }} &ndash; {{ c.name }}</a>
+        <span class="tags">
+        {% for t in c.get_tags %}
+            <span class="tag">{{ t }}</span>
+        {% endfor %}
+        </span>
+    </li>
+    </span>
+{% endfor %}
+</ul></span>
+{% else %}
+<p>Nothing? :(</p>
+{% endif %}
+
+
+
+<h1>Achievements</h1>
+
+
+
+{% if own_achievements %}
+<span class="achievements">
+{% for a in own_achievements %}
+    <div class="achievement own_achievement" title="{{a.text}}">
+        <div class="achievement_name"><b>{{ a.name }}</b></div>
+        <div class="achievement_how">{{ a.how }}</div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+{% if other_achievements %}
+<span class="achievements">
+{% for a in other_achievements %}
+    <div class="achievement not_achievement" title="{{a.text}}">
+        <div class="achievement_name"><b>{{ a.name }}</b></div>
+        <div class="achievement_how">{{ a.how }}</div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+
+
+
+{% endblock %}
+

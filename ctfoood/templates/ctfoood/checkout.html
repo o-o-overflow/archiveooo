@@ -1,0 +1,395 @@
+{% extends "ctfoood/base.html" %}
+
+{% block title %}{{ chal.name }}{% endblock %}
+{% block content %}
+
+{% load admin_urls %}
+{% load humanize %}
+
+
+<h1 class="chal_title">{{ chal.format }}&thinsp;-&thinsp;{{ chal.name }}
+    <span class="tags">
+    {% for t in checkout.get_tags %}
+        <span class="tag">{{ t }}</span>
+    {% endfor %}
+    </span>
+</h1>
+<div class="authors">by {{ checkout.authors }}</div> {# TODO: link to users? #}
+
+
+
+{% if private %}<div class="private_box private_cmds">
+<p class="commit_data">Checkout created by {{ checkout.creation_user }} {{ checkout.creation_time|naturaltime }}
+{% if checkout.commit_hash %}&mdash; {{ checkout.commit_hash|slice:":7" }}
+    {% if checkout.dirty_tree %}(dirty){% endif %}
+    {% if checkout.branch %}{{ checkout.branch }}{% endif %}
+    {# TODO: git@github #}
+    {% if checkout.pull_url %}&mdash; <span class="pulled_from">{{ checkout.pull_url|urlize }}</span>{% endif %}
+{% endif %}
+{% if checkout.docker_image_built %}
+<br>Docker image successfully built: <a title="{{ checkout.docker_image_tgzsha256 }}" href="{{ checkout.docker_image_tgzurl }}">{{ checkout.get_imgtag }}</a></p>
+{% endif %}
+</p>
+{% if checkout.tester_gave_errors %}
+    <p class="tester_gave_errors">The tester reports some errors (expand info on the admin page).</p>
+{% elif checkout.tester_gave_warnings %}
+    <p class="tester_gave_warnings">The tester had some warnings (expand info on admin page).</p>
+{% endif %}
+<p>Edit:
+    <a href="{% url chal_meta|admin_urlname:'change' chal.pk %}">the base challenge</a> | 
+    <a href="{% url checkout_meta|admin_urlname:'change' checkout.pk %}">this checkout</a> |
+    {% if not checkout.dockerhub_uri %}
+      <a href="{% url "push_to_dockerhub" checkout.pk %}">irreversibly push to the public dockerhub</a> |
+    {% endif %}
+    <a href="{{ chal.get_absolute_url }}">create a new checkout</a>
+</p><p>
+{% if this_is_the_public_checkout %}
+    <span class="this_is_public_warning">This is _the_ public checkout for {{chal.format}}&thinsp;-&thinsp;{{chal.name}}</span>
+{% elif checkout.public %}
+    <span class="this_is_public_warning">This checkout is set to public,
+    {% if chal.is_public %}
+        <span class="this_is_public_warning">but the main public checkout is a different one
+            (<a href="{{ chal.public_checkout.get_absolute_url }}">{{ chal.public_checkout }}</a>)
+    {% else %}
+        but is not visible right now because the base challenge is private. Set this (or another checkout) as the main public challenge to actually publish the challenge.
+    {% endif %}</span>
+{% else %}
+    This checkout is private
+    {% if chal.is_public %}
+        but <span class="this_is_public_warning">the challenge itself is public</span>.
+        (<a href="{{ chal.public_checkout.get_absolute_url }}">{{ chal.public_checkout }}</a>)</p>
+    {% else %}
+        and the challenge is private too.
+    {% endif %}
+{% endif %}
+</div>{% endif %}
+
+
+
+{% if request.method == "POST" %}
+<div class="flag_postmsg">
+    {% if got_valid_flag %}
+    <p class="flag_accepted"><b>Flag accepted, congrats!</b>
+    -- Wanna <a style="text-shadow:none; color:white;" href="https://github.com/o-o-overflow/archiveooo/issues/new?&labels=hint&template=hint-or-extra-note.md&title=%5BHINT%5D+for+{{ chal.name|urlencode }}">suggest a hint</a>?
+    {% if not user.is_authenticated %}
+    <br><a href="{% url "login" %}?next={{request.path}}">Login</a> to record this in your profile and get points :)
+    {% endif %}
+    </p>
+    {% else %}
+    <p class="flag_rejected"><b>Sorry, that's not the right flag.</b></p>
+    {% endif %}
+</div>
+{% endif %}
+
+
+
+<p class="intro">This was {{ chal_type_description|safe }} challenge, part of {{ chal.format }}.
+{% if chal.ctftime_url %}(<a href="{{ chal.ctftime_url }}">CTFtime</a>){% endif %}
+{# TODO: expand with format link, per-type format description, info like round duration, ... #}
+
+{# TODO: table? #}
+<p class="intro old_game_info">
+{% if chal.points %}<span title="Points awarded at game-end">Points</span>: {{ chal.points|intcomma }}<br>{% endif %}
+{% if chal.solves_n or chal.solves_data %}Was solved by: 
+    {{chal.solves_n|default:"?"}}
+    {% if chal.solves_url %}<a href="{{chal.solves_url}}">{% endif %}teams{% if chal.solves_url %}</a>{% endif %}
+    <br>
+{% endif %}
+{% if chal.pcaps_url or chal.pcaps_notice %}<b>PCAPs</b>:
+    {% if chal.pcaps_url %}<a href="{{ chal.pcaps_url }}">download</a>{% endif %}
+    {{ chal.pcaps_notice|urlize }}<br>
+{% endif %}
+{% if chal.offline %}This challenge is solved offline, there's no server side component.<br>{% endif %}
+{% if already_solved %}<span class="already_solved">You have already solved this challenge</span>
+    {% if user.is_staff %}[<a href="/admin/ctfoood/usersettings/{{ user.usersettings.pk }}/change/">change</a>]{% endif %}
+{% endif %}
+</p>
+
+
+{% if own_vms %}  {# Also see the homepage TODO: this chal only #}
+<div class="private_box private_cmds vm_list_box">
+  <p>You have active servers:
+  {% if user.is_staff %}[ <a href="/admin/ctfoood/vm/">admin</a> ]{% endif %}
+  <ul class="vm_list">
+    {% for vm in own_vms %}
+    <form action="{% url "delete_vm" vm.id %}" target="_blank">
+        {% csrf_token %}
+        <li>{{ vm.ip }}:{{ vm.checkout.exposed_port }}
+            for <a href="{{vm.checkout.get_absolute_url}}">{{ vm.checkout.chal.name }}</a>
+            <span style="color: #888;">[ {{ vm.creation_time|naturaltime }} | id={{vm.id}}
+                | <input type="submit" value="delete" onclick="delete_vm_click(event);">
+                ]<br>{{ vm.latest_user_message }}</span>
+            {% if user.is_staff %}[ <a href="{% url "run_test_deployed" vm.id %}" target="_blank">Run tester</a> ]{% endif %}
+        </li></form>
+    {% endfor %}
+  </ul>
+</div>{% endif %}
+
+
+
+
+{% if checkout.can_player_spawn_vm or checkout.can_ooo_spawn_vm %}  {# right now, implies that a docker image has been built #}
+<div class="vmbox">
+<h3 style="margin-bottom: 1em">You may spawn the server:</h3>
+
+{% if checkout.can_player_spawn_vm %}
+    <details><summary>On your laptop</summary>
+    {% if checkout.get_vm_setup %}  {# already checked that players are allowed to spawn it #}
+     <p>This challenge may require more resources or special steps: <i>{{ checkout.get_vm_setup_notice|safe }}</i>
+    {% endif %}
+    <ul>
+        <!-- docker load <(curl -fsSL '{{ checkout.docker_image_tgzurl }}' ) -->
+        <li>Install <a href="https://docs.docker.com/engine/install/">docker</a></li>
+	{% if checkout.dockerhub_uri %}
+	  <li><code>docker pull {{ checkout.dockerhub_uri }}</code> (<a title="{{ checkout.docker_image_tgzsha256 }}" href="{{ checkout.docker_image_tgzurl }}">docker-saved download</a>)</li>
+	  <li><code>docker run -d --name {{ chal.get_clean_name_for_tags }} {{ checkout.dockerhub_uri }}</code></li>
+	{% else %}
+          <li>Download the <a title="{{ checkout.docker_image_tgzsha256 }}" href="{{ checkout.docker_image_tgzurl }}">docker-saved image</a>, then <code>docker load -i <i>the_img.tar.gz</i></code></li>
+          <li><code>docker run -d --name {{ chal.get_clean_name_for_tags }} {{ checkout.get_imgtag }}</code></li>
+	{% endif %}
+        <li><b>Local IP:</b> <code>docker inspect {{ chal.get_clean_name_for_tags }} -f
+                {% verbatim %}'{{ .NetworkSettings.Networks.bridge.IPAddress }}'{% endverbatim %}
+            </code></li>
+        {% if checkout.exposed_port %}
+        <li>Connect to that IP:<abbr title="docker inspect {{ chal.get_clean_name_for_tags }} | grep -A2 ExposedPorts">{{ checkout.exposed_port }}</abbr> &mdash;
+            Remember to <code>docker rm -f</code> when done.</li></ul>
+        {% else %}
+          <li><b>Local port:</b> <code>docker inspect {{ chal.get_clean_name_for_tags }} -f
+                  {% verbatim %}'{{ .Config.ExposedPorts }}'{% endverbatim %}
+              </code></li>
+          <li>Connect to the IP and port that were displayed above. Remember to <code>docker rm -f</code> when done.</li>
+        {% endif %}
+    </ul>
+    </details>
+
+  {% if chal.source_url %}
+    <details><summary>On your laptop (full source)</summary>
+    {% if checkout.get_vm_setup %}  {# already checked that players are allowed to spawn it #}
+      <p>This challenge may require more resources or special steps: <i>{{ checkout.get_vm_setup_notice|safe }}</i>
+    {% endif %}
+    <ul>
+        <li>Install <a href="https://docs.docker.com/engine/install/">docker</a> and <code>pip install PyYAML coloredlogs</code>
+        <li>{% if checkout.public_git_clone_cmd %}<code>{{ checkout.public_git_clone_cmd }}</code>
+            {% else %}Download the <a href="{{ chal.source_url }}">source</a>{% endif %}
+            {% if chal.source_notice %}(<a href="#source">notice below</a>){% endif %}</li>
+        <li><code>cd {{ chal.name }}</code></li>
+        <li><code>./<a href="https://oooverflow.io/spawner">spawner</a> --log-level=INFO</code></li>
+        <li>Connect to the <code>ip:port</code> displayed</li>
+    </ul>
+    </details>
+  {% endif %} {# has source_url #}
+
+{% comment %}
+  {% if chal.source_url %}
+    <details><summary>On your VM</summary>
+        <form action="{% url 'spawn_vm_on_ooo' checkout.id %}" method="post">
+            {% csrf_token %}
+            <!-- TODO: multi-provider -->
+            <p><label for="api_token">DigitalOcean <a href="https://www.digitalocean.com/docs/platform/availability-matrix/">Region</a></label>
+            <input type="text" required minlength=2 maxlength=50 size=5 id="DO_region" name="DO_region" value="{{ default_region }}">
+            <label for="api_token"><a href="https://cloud.digitalocean.com/account/api/tokens">API Token</a></label>
+            {% if user.is_authenticated and user.usersettings.default_credentials.api_token %}
+            <input type="password" size=10 minlength=64 maxlength=64 id="DO_token" name="DO_token" placeholder="(use your default)">
+            Default: <a href="/TODO_profile">{{ user.usersettings.default_credentials }}</a>
+            {% else %}
+            <input type="password" required minlength=64 maxlength=64 id="DO_token" name="DO_token" placeholder="DigitalOcean API token">
+            {% endif %}
+            <p><label style="vertical-align: middle" for="ip_whitelist" title="The firewall will also include this machine (TODO: get_ooo_host_ip) to download the pre-built service image.">Netmasks allowed to connect to the VM:</label>
+            <textarea style="vertical-align: middle" id="ip_whitelist" name="ip_whitelist" placeholder="your IP/32">{{ default_ip_whitelist }}</textarea>
+            <p><input type="checkbox" required id="i_understand_risks" name="i_understand_risks">
+            <label for="i_understand_risks">I understand that there are no guarantees, and that I should filter traffic.</label><br>
+            <input type="checkbox" required id="i_understand_billing" name="i_understand_billing">
+            <label for="i_understand_risks">I understand that this will create a <code class="vm_type">{{ chal.get_vm_type }}</code> droplet in my account, at <span class="vm_cost">{{ chal.get_vm_cost }}</span>, and <b class="delete_vm_warning">that I need to go to the control panel to destroy it and stop paying</b>.</label><br>
+            <p><input type="submit" value="Spawn a VM in my cloud">
+        </form>
+    </details>
+  {% endif %} {# has_source_url #}
+{% endcomment %}
+
+{% endif %}  {# can_player_spawn_vm #}
+
+
+{% if checkout.can_ooo_spawn_vm %}
+<details><summary>Hosted by OOO</summary>
+{% if user.is_authenticated %}
+    <form action="{% url 'spawn_vm_on_ooo' checkout.id %}" target="_blank" method="post" id="spawn_on_ooo_form">
+        {% csrf_token %}
+        <p><label style="vertical-align: middle" for="ooo_ip_whitelist" title="The firewall will also include this machine (TODO: get_ooo_host_ip) to download the pre-built service image.">IPv4 to allow connections from:</label>
+	<input type="text" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" required style="vertical-align: middle" id="ooo_allowed_ip" name="ooo_allowed_ip"
+		placeholder="your IP address" value="{{ user_ip }}">
+	<p><input type="checkbox" required id="i_will_be_good" name="i_will_be_good">
+        <label for="i_will_be_good">I understand that there are no guarantees, and I promise I'll be good.</label>
+        <p>
+	{% if recaptcha_sitekey %}
+	  <script src="https://www.google.com/recaptcha/api.js"></script>
+	  <button id="ooo_submit_button" class="g-recaptcha" data-sitekey="{{ recaptcha_sitekey }}" data-callback="recaptcha_ooo_submit" data-action="submit">Spawn a server for 20 minutes</button>
+	{% else %}
+          <input id="ooo_submit_button" type="submit" value="Spawn a server for 20 minutes" onclick="plain_ooo_submit">
+	{% endif %}
+        <span id="vm_ip"></span>
+        <span id="vm_message"></span>
+        {% if private %} 
+            {# Javascript will show it and add /vmid to the href #}
+            <a style="display: none" id="run_test_deployed" href="/run_test_deployed" target="_blank">Run the tester</a>
+        {% endif %}
+    </form>
+{% else %}
+    Right now we're asking players to <a href="{% url "login" %}?next={{request.path}}">login</a> first.
+{% endif %}
+</details>
+{% endif %}  {# can_ooo_spawn_vm #}
+</div>
+
+{% else %}  {# nobody can spawn a server #}
+  {% if user.is_staff %}
+  <div class="users_cant_create_a_vm">
+      <p>Users can't create a container :(
+      <p>TODO: this should happen only for offline challenges OR if the challenge is not "containerized"
+      <p>Otherwise check the admin to see why we weren't able to docker build.
+  </div>
+  {% endif %}
+{% endif %} {# ability to spawn a server #}
+
+
+
+
+
+<h3>Description</h3>
+
+{% if special == "speedrun" %}
+<div class="special_box">
+    <table><tr><td class="special_icon"><span class="material-icons" style="font-size: 0.9em;">directions_run</span></td>
+      <td>
+	<p><b>This is a speedrun challenge! [
+	<a href="https://scoreboard2019.oooverflow.io/#/leaderboard/{{ chal.name }}">Game leaderboard</a> ]
+	</b>
+	<p>The first team to solve it got 25 points, with points decreasing in value to 5 points awarded to all solvers below the fourth place. 300, 200, and 100 points were awarded to the lowest total solving time across all speedruns (<a href="https://scoreboard2019.oooverflow.io/#/rules">full rules</a>).
+      </tr><tr><td colspan="2">
+	<p>Speedruns were released every two hours during the competition, and got progressively harder. They were a way to evaluate how quickly teams could set themselves up and rewarded automation and quick thinking. We don't record times on the archive and always assign 5 points (the challenges were released a long time ago, after all :D), but they still serve as a simple measure of how fast you can be compared to skilled players.
+      </td></tr></table>
+</div>
+{% endif %}
+
+{% if special == "golf" %}
+<div class="special_box">
+    <table><tr><td class="special_icon"><span class="material-icons" style="font-size: 0.9em;">golf_course</span></td>
+      <td>
+	<p><b>This was a golfing challenge</b>
+        <p>Golf challenges start with a very high score threshold, which periodically decreases until a team reaches it. At that point, the threshold is set for everyone and the challenge behaves like a regular jeopardy-style one. (<a href="https://oooverflow.io/dc-ctf-2020-quals/#:~:text=GOLF">Full rules</a>).
+      </tr><tr><td colspan="2">
+        <p>Golf challenges borrow the speed element from 2019's speedrun format, rewarding teams that solve the challenge fast and lock the challenge threshold to a high value (where few teams will reach them, ensuring a high point value) but at a much slower pace. They also self-adjust both in difficulty (players set the final threshold) and in score (OOO's point system rewards challenges that are solved by few teams).
+      </td></tr></table>
+</div>
+{% endif %}
+
+{% if special == "finals" %}
+<div class="special_box">
+    <table><tr><td class="special_icon"><span class="material-icons" style="font-size: 0.9em;">sports</span></td>
+      <td>
+	<p><b>This challenge was part of the finals</b>
+	<p>During finals, scoring happens per-round based on attack (steal flags from others) and defense (patch the service to prevent others from pwning you) points. Patching is not currently simulated on the archive, but keep in mind that most services only allowed a limited amount of bytes to be changed from the original binary. (<a href="https://oooverflow.io/dc-ctf-2019-finals/#scoring">Scoring rules</a>).
+      </tr><tr><td colspan="2">
+        <p>King of the Hill points are also awarded per-round, with only the top-ranking teams getting points.
+        <p>Teams were informed of game events, with redacted info on the last day. In some cases players could also see their own traffic pcaps, generally only after some hours of play.
+        {# Replay pcaps? #}
+      </td></tr></table>
+</div>
+{% endif %}
+
+
+
+
+{% if chal.yt_videoid and request.user.usersettings.hide_videos %}
+    <p class="hidden_video">
+    <b>We have <a href="https://youtu.be/{{ chal.yt_videoid }}">an extra video for this challenge.</a></b></p>
+{% endif %}
+<!-- Video box, actually floats right -->
+{% if chal.yt_videoid and not request.user.usersettings.hide_videos %}
+    <div class="chal_video">
+        <iframe width="480" height="270" src="https://www.youtube-nocookie.com/embed/{{ chal.yt_videoid }}?modestbranding=1&rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+{% endif %}
+
+
+
+<div class="description">
+<div class="main_description">{{ main_description|safe|linebreaks }}</div>
+{% if chal.extra_description or checkout.violates_flag_format %}
+<div class="extra_description">
+  {% if chal.extra_description %}{{ extra_description|safe|linebreaks }}{% endif %}
+  {% if checkout.violates_flag_format %}<div class="violates_flag_format">Note: this challenge's flag is not in the usual format.</div>{% endif %}
+</div>
+{% endif %}
+</div>
+
+
+{% if checkout.public_files.all %}
+<p id="public_files" class="public_files">
+{% for p in checkout.public_files.all %}
+    <span class="public_file">
+        <span class="material-icons public_file_icon">line_weight</span>
+        <a download title="{{p.sha256}}" href="{{p.url}}">{{p.filename}}</a>
+    </span>
+{% endfor %}
+</p>
+{% endif %}
+
+
+
+<div id="submit_flag" class="submit_flag">
+<form method="POST" id="flag-form" action="">
+    {% csrf_token %}
+    <label for="flag">Flag:</label>
+    {% if checkout.violates_flag_format %}
+      <input type="text" placeholder="custom-format flag" id="flag" name="flag">
+    {% else %}
+      <input type="text" placeholder="OOO{...}" id="flag" name="flag">
+    {% endif %}
+    <input type="hidden" value="{{ checkout.id }}" name="checkout_id"> {# Could be removed #}
+    <input type="submit">
+</form>
+</div>
+
+
+
+
+
+<h3>Hints</h3>
+{% if chal.hints.all %}
+  <div id="hints" class="hints">
+  {% for h in chal.hints.all %}
+  <details><summary>Hint {{ forloop.counter }}</summary>{{ h|urlize }}
+  {% endfor %} {# They are all nested #}
+  {% for h in chal.hints.all %}
+  </details>
+  {% endfor %}</div>
+  <p>If you wish, you can <a href="https://github.com/o-o-overflow/archiveooo/issues/new?&labels=hint&template=hint-or-extra-note.md&title=%5BHINT%5D+for+{{ chal.name|urlencode }}">contribute</a> more.</p>
+{% else %}
+  <p>None yet :(<br>If you wish, you can <a href="https://github.com/o-o-overflow/archiveooo/issues/new?&labels=hint&template=hint-or-extra-note.md&title=%5BHINT%5D+for+{{ chal.name|urlencode }}">contribute</a> some.</p>
+{% endif %}
+
+{% if chal.official_writeup_url %}
+<p>There's an <a href="{{ chal.official_writeup_url }}">author-recommended writeup</a>.
+{% endif %}
+
+{% if chal.spoilered_notes.all %}
+<h3>Further (spoilery) pointers</h3><!-- "spoilery appendix"? -->
+<div id="spoilered_notes" class="spoilered_notes">
+{% for sn in chal.spoilered_notes.all %}
+<details><summary>{{ sn.name|default:"Extra note" }}</summary>{{ sn|urlize }}</details>
+{% endfor %}
+</div>
+{% endif %}
+
+
+{% if chal.source_url or chal.source_notice %}
+<h3 id="source">Source</h3>
+{% if chal.source_url %}Spoilers ahead! Code for this challenge is <a href="{{ chal.source_url }}">publicly available</a>.{% endif %}
+{{ chal.source_notice|urlize }}
+{% endif %}
+
+<!-- </div>  leftside -->
+
+{% endblock %}
+
+

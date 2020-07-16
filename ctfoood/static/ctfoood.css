@@ -1,0 +1,216 @@
+h1 .tag {  /* Part of name h1 */ font-size: 66%; }
+.tag {
+    background-color: #44a;
+    color: #ccc;
+    border: #66f 1px solid;
+    padding: 0.2em 0.4em;
+    vertical-align: middle;
+    font-size: 75%;
+    display: inline-block;
+}
+h1 { margin-top: 1.5em; }
+.chal_listing { font-size: 120%; }
+.chal_listing li { margin: 0.3em 0; }
+.solved_chal { color: #0b0; /*text-decoration: line-through;*/ }
+.solved_chal a { color: #0b0; }
+.solved_chal li:before { content: ":)" }
+
+div.homechal {
+    vertical-align: middle;
+    display: inline-block;
+    /*min-width: 6em;
+    max-width: 12em;*/
+    width: 12em;
+    height: 9em;
+    margin: 0.5em 0.4em;
+    /*border: 1px dashed #111;*/
+    background-color: #6662;
+    padding: 0.5em 1.3em 0.5em 0.7em;
+}
+div.homechal .format { font-size: 80%; color: #888; }
+div.homechal a { font-size: 110%; }
+div.hometags { margin-top: 0.5em; }
+.point_value { color: #aaa; font-size: 90%; }
+
+.public_file {
+    background: linear-gradient(#800, #800a);
+    /*background-color: #800;*/
+    /*border: #f66 1px solid; */
+    padding: 0.5em;
+    vertical-align: middle;
+    display: inline-block;
+    margin-bottom: 0.5em;
+}
+.public_file a { color: #ddd; text-shadow: none; }
+/*.public_file a:before { content: "➠"; padding-right: 0.5em; }*/
+.public_file_icon { vertical-align: middle; font-size: 1.1em !important; }
+p.public_files { margin-top: 1.5em; margin-bottom: 2em; }
+
+h3 { margin-bottom: 5px; }
+
+h1.chal_title { margin-bottom: 0px; margin-top: 0px; }
+.authors { font-size: 90%;  color: #aaa; }
+
+
+div.main_description, div.extra_description {
+    padding: 0.5em 2em;
+    /*border: 1px darkred solid;
+    background-color: #000;
+    padding: 0.5em 2em;*/
+    margin: 0.8em 0.1em;
+    line-height: 1.3em;
+    max-width: 40em;
+    /* width: 40%; */
+}
+div.description p { margin-top: 0.5em; margin-bottom: 0.5em; }
+div.main_description { border-left: 2px #caa851a0 solid; }
+div.extra_description { margin-top: 0.5em; border-left: 2px #666 solid; color: #c5c5c5; }
+
+div.hints, div.spoilered_notes {
+    /*border: 1px #4a4 solid; */
+    /*padding: 0.8em 2em; */
+    padding: 0em 1em;
+    line-height: 1.3em;
+    width: fit-content;
+    /*max-width: 40%;*/
+}
+div.hints { color: #4d4; }
+div.hints summary { color: #eaeaea; /* TODO: inherit from body? */ }
+summary { width: fit-content; margin-top: 0.4em; margin-bottom: 0.4em; }
+details { margin-bottom: 1.1em; }
+
+.private_box {
+    /*border: 3px white dotted;*/
+    background-color: #fff1;
+    padding: 0.5em 2em;
+    width: fit-content;
+    margin: 0.8em;
+    line-height: 1.3em;
+}
+.private_box p { margin-top: 0.5em; margin-bottom: 0.5em; }
+.private_box a { color: #faa; text-shadow: none; }
+.private_chals { padding-top: 1em; width: 90%; }
+
+.warning_notice, .users_cant_create_a_vm {
+    border: 2px yellow dashed;
+    background-color: #fff1;
+    padding: 0.5em 2em;
+    width: fit-content;
+    margin: 1.5em 0.8em;
+    line-height: 1.3em;
+    font-size: 95%;
+}
+
+
+.vmbox {
+    /* float: right; margin: 1em; */
+
+    /*width: 40%;
+    max-width: 40%;*/
+
+    background-color: #444;
+    /* border: 1px #666 solid; */
+    margin: 1.5em 0em;
+    padding: 0.8em 2em;
+    line-height: 1.3em;
+}
+.vm_cost, .delete_vm_warning { color: yellow; }
+.vm_type { color: pink; }
+
+
+code { color: lightgray; font-weight: bold; text-shadow: none; }
+
+
+.tester_gave_errors { color: yellow; }
+.tester_gave_warnings { color: orange; }
+.commit_data { color: #ddd; font-size: 85%; } /* Actually the whole line */
+.pulled_from { font-size: 80%; vertical-align: middle; }
+.this_is_public_warning { color: yellow; }
+
+.chal_video {
+    float: right;
+    margin: 1em;
+
+    /*overflow: scroll;
+    resize: both;*/
+    /*border: 5px solid black;*/
+}
+
+.intro { color: darkgray; line-height: 1.3em; margin: 0.5em 0; }
+.already_solved { color: limegreen; }
+
+.top_cmds { font-size: 75%; vertical-align: middle; }
+
+div.flag_postmsg p { padding: 1em 3em; }
+p.flag_accepted { background: green; }
+p.flag_rejected { background: darkred; }
+
+div.submit_flag { margin: 1.5em; }
+
+
+footer { margin-top: 3em; margin-bottom: 2em; text-align: right; color: #555; font-size: 60%; }
+footer a { color: #666; }
+
+
+.achievement {
+    color: #ccc;
+    padding: 0.6em;
+    vertical-align: middle;
+    font-size: 80%;
+    display: inline-block;
+    width: 12em; min-height: 6em;
+    margin: 1em;
+}
+.own_achievement { background-color: #333; border: 1px green dashed; }
+.not_achievement { background-color: #333; border: 1px gray dashed; color: gray;}
+.achievement_how { margin-top: 0.5em }
+/*.achievement_text { display: none }*/
+
+.profile_points { margin-bottom: 0.2em; }
+.points_explanation { color: gray; font-size: 80%; line-height: 1.2em; }
+
+/* Register form */
+.helptext{ color: gray; font-size: 80%; font-family: sans-serif; }
+
+/* Django built-in messages (displayed in private_box) */
+/* debug, info { } */
+.messages { border: 1px #888 solid; }
+.success { color: white; background-color: green; padding: 1em; }
+.warning { color: yellow; }
+.error { color: yellow; font-weight: bold; font-size: 110%; }
+
+
+.special_box {
+    /*border: 3px white dotted;*/
+    background-color: #99f2;
+    padding: 1em 2em;
+    width: fit-content;
+    margin: 0.8em;
+    line-height: 1.4em;
+    font-size: 85%;
+}
+.special_box p { margin-top: 0.5em; margin-bottom: 0.5em; }
+.special_box a { color: #faa; text-shadow: none; }
+.special_box b { font-size: 120%; }
+.special_icon { font-size: 5em; }
+.special_box table { margin: 0; }
+.special_box td { padding-top: 0; padding-bottom: 0; }
+
+
+abbr { text-decoration: none; border-bottom: 1px dotted; }
+
+#vm_ip { color: gray; }
+#vm_message {
+    color: yellow;
+    font-weight: bold;
+    opacity: 1;
+    transition: opacity 1s;
+}
+#vm_message.faded { opacity: 0.5; }
+.vm_ip_finished {
+    color: white !important;
+    background-color: green;
+    padding: 0.5em 1em;
+    font-weight: bold;
+}
+.delete_vm_link { cursor: pointer; }
