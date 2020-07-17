@@ -210,7 +210,8 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             sg.delete()
         if vm:
             vm.messagelog += "\n\nThere was an error while creating the VM"
-            vm.delete()
+            vm.deleted = True
+            vm.save()
         return None, None
 
 
@@ -218,22 +219,29 @@ def delete_ooo_vm(vm:VM) -> Tuple[int,str]:
     all_output = "[ ] Deletion started...\n"
     try:
         ec2 = get_ec2()
-        if vm.instance_id:
-            all_output += "[*] Terminating the EC2 VM\n"
-            instance = ec2.Instance(vm.instance_id)
-            instance.terminate()
-            all_output += "Waiting for the EC2 VM to terminate...\n"
-            instance.wait_until_terminated()
-            vm.instance_id = None
+        if vm.deleted:
+            return 0, "The VM was already deleted"
+        with transaction.atomic():
+            if vm.instance_id:
+                all_output += "[*] Terminating the EC2 VM\n"
+                instance = ec2.Instance(vm.instance_id)
+                instance.terminate()
+                all_output += "Waiting for the EC2 VM to terminate...\n"
+                instance.wait_until_terminated()
+                vm.instance_id = ""
+                vm.save()
 
-        if vm.security_group_id:
-            all_output += "[*] Deleting the EC2 Security Group\n"
-            sg = ec2.SecurityGroup(vm.security_group_id)
-            sg.delete()
+            if vm.security_group_id:
+                all_output += "[*] Deleting the EC2 Security Group\n"
+                sg = ec2.SecurityGroup(vm.security_group_id)
+                sg.delete()
+                vm.security_group_id = ""
+                vm.save()
 
-        all_output += "[_] Finished, deleting the internal VM object.\n"
-        vm.delete()
-        return 0, all_output
+            all_output += "[_] Finished, setting the internal VM object to 'deleted'.\n"
+            vm.deleted = True
+            vm.save()
+            return 0, all_output
     except Exception as e:
         return 99, "Got exception %s %s" % (type(e), e)
 

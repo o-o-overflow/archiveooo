@@ -343,11 +343,13 @@ class ChalCheckout(models.Model):
 class VM(models.Model):
     """VM we created, with one deployed challenge"""
     id = models.AutoField(primary_key=True)
-    checkout = models.ForeignKey(ChalCheckout, on_delete=models.PROTECT)
+    checkout = models.ForeignKey(ChalCheckout, blank=True, null=True, on_delete=models.SET_NULL)
     ip = models.GenericIPAddressField('IP', blank=True, null=True, help_text="Null if not yet created")
     creation_time = models.DateTimeField(auto_now_add=True)
     creation_user = models.ForeignKey(User, on_delete=models.CASCADE)
     flag = models.CharField(max_length=FLAG_MAX_LEN, help_text="The flag that was deployed, randomly-generated if possible.")
+
+    deleted = models.BooleanField(default=False)
 
     security_group_id = models.CharField(max_length=150, blank=True)
     instance_id = models.CharField(max_length=150, blank=True)

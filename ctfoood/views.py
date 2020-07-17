@@ -134,7 +134,7 @@ def homepage(request):
                 solved_by=us).order_by('-points', '-format', 'name')
         own_achievements = us.achievements.all()
         other_achievements = Achievement.objects.exclude(pk__in=own_achievements)
-        own_vms = VM.objects.filter(creation_user=request.user).order_by('-id')
+        own_vms = VM.objects.filter(creation_user=request.user, deleted=False).order_by('-id')
     else:
         public_chals = list(Chal.objects.filter(public_checkout__isnull=False)\
                 .order_by('points', '-format', 'name'))
@@ -221,8 +221,7 @@ def checkoutpage(request, chalname, checkoutid):
         "got_valid_flag": got_valid_flag, }
     if request.user.is_authenticated:
         ctx.update({
-            #"own_vms": VM.objects.filter(creation_user=request.user, checkout=checkout).order_by('-id'),
-            "own_vms": VM.objects.filter(creation_user=request.user).order_by('-id'),
+            "own_vms": VM.objects.filter(creation_user=request.user, deleted=False).order_by('-id'),
             "already_solved": chal.was_solved_by(request.user),
             "default_region": get_settings(request.user).fill_default_region(request),
             "user_ip": get_user_ip(request),
