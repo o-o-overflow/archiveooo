@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
+import django.utils.timezone
 import ipaddress
 import logging
 import re
@@ -220,8 +221,10 @@ def delete_ooo_vm(vm:VM) -> Tuple[int,str]:
     try:
         ec2 = get_ec2()
         if vm.deleted:
-            return 0, "The VM was already deleted"
+            return 0, "The VM has already been deleted"
         with transaction.atomic():
+            if vm.deleted:
+                return 0, "The VM has already been deleted"
             if vm.instance_id:
                 all_output += "[*] Terminating the EC2 VM\n"
                 instance = ec2.Instance(vm.instance_id)
@@ -240,8 +243,9 @@ def delete_ooo_vm(vm:VM) -> Tuple[int,str]:
 
             all_output += "[_] Finished, setting the internal VM object to 'deleted'.\n"
             vm.deleted = True
+            vm.deleted_at = django.utils.timezone.now()
             vm.save()
-            return 0, all_output
+        return 0, all_output
     except Exception as e:
         return 99, "Got exception %s %s" % (type(e), e)
 

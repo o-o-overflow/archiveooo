@@ -350,6 +350,7 @@ class VM(models.Model):
     flag = models.CharField(max_length=FLAG_MAX_LEN, help_text="The flag that was deployed, randomly-generated if possible.")
 
     deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(blank=True, null=True)
 
     security_group_id = models.CharField(max_length=150, blank=True)
     instance_id = models.CharField(max_length=150, blank=True)
