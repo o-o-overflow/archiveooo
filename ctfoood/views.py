@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.validators import EmailValidator
 from django.views.decorators.http import require_POST, require_safe
 from django.views.decorators.vary import vary_on_cookie
-from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.cache import cache_control, never_cache, patch_cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -146,7 +146,7 @@ def homepage(request):
         own_achievements = []
         other_achievements = Achievement.objects.all()
         own_vms = []
-    return render(request, 'ctfoood/home.html', {
+    response = render(request, 'ctfoood/home.html', {
         "own_private_chals": own_private_chals,
         "grp_private_chals": grp_private_chals,
         "public_chals": public_chals,
@@ -155,6 +155,11 @@ def homepage(request):
         "other_achievements": other_achievements,
         "own_vms": own_vms,
     })
+    if request.user.is_authenticated:
+        patch_cache_control(response, max_age=0)
+    else:
+        patch_cache_control(response, max_age=1800)
+    return response
 
 
 @require_safe
@@ -226,7 +231,12 @@ def checkoutpage(request, chalname, checkoutid):
             "default_region": get_settings(request.user).fill_default_region(request),
             "user_ip": get_user_ip(request),
             "default_ip_whitelist": get_settings(request.user).fill_default_allowed_ip(request), })
-    return render(request, 'ctfoood/checkout.html', add_recaptcha_sitekey(ctx))
+    response = render(request, 'ctfoood/checkout.html', add_recaptcha_sitekey(ctx))
+    if request.user.is_authenticated:
+        patch_cache_control(response, max_age=0)
+    else:
+        patch_cache_control(response, max_age=1800)
+    return response
 
 
 
