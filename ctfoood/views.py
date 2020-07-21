@@ -156,7 +156,7 @@ def homepage(request):
         "own_vms": own_vms,
     })
     if request.user.is_authenticated:
-        patch_cache_control(response, max_age=0)
+        patch_cache_control(response, max_age=0, must_revalidate=True)
     else:
         patch_cache_control(response, max_age=1800)
     return response
@@ -233,7 +233,7 @@ def checkoutpage(request, chalname, checkoutid):
             "default_ip_whitelist": get_settings(request.user).fill_default_allowed_ip(request), })
     response = render(request, 'ctfoood/checkout.html', add_recaptcha_sitekey(ctx))
     if request.user.is_authenticated:
-        patch_cache_control(response, max_age=0)
+        patch_cache_control(response, max_age=0, must_revalidate=True)
     else:
         patch_cache_control(response, max_age=1800)
     return response
