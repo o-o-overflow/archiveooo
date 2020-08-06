@@ -306,10 +306,8 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
 
         exposed_port = None
         if os.path.exists(os.path.join(destdir, "service", "Dockerfile")):
-            if 'container_port' in y:
+            if 'container_port' in y:  # Note that container_port can be != game_port (which we don't need to use, the endpoint is directly the container)
                 exposed_port = y['container_port']
-            elif 'game_port' in y:
-                exposed_port = y['game_port']
             elif y.get('game_network_info',{}).get('port','guess') != 'guess':
                 exposed_port = y['game_network_info']['port']
             else:
