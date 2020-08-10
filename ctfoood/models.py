@@ -6,6 +6,7 @@ import django.urls
 import datetime
 import os
 import subprocess
+from typing import List, Tuple
 
 DEFAULT_CACHE_TIME = datetime.timedelta(days=1)
 
@@ -108,14 +109,14 @@ class VMSetup(models.Model):
 
 # DB models for challenges and their deployments
 
-FORMAT_CHOICES = [  # TODO get from backend and/or models.IntegerChoiches
+FORMAT_CHOICES : List[Tuple[str,str]] = [  # TODO get from backend and/or models.IntegerChoiches
         ('dc2020f', "2020 Finals"),
         ('dc2020q', "2020 Quals"),
         ('dc2019f', "2019 Finals"),
         ('dc2019q', "2019 Quals"),
         ('dc2018f', "2018 Finals"),
         ('dc2018q', "2018 Quals"), ]
-TYPE_CHOICES = [  # TODO get from backend and/or models.IntegerChoiches
+TYPE_CHOICES : List[Tuple[str,str]] = [  # TODO get from backend and/or models.IntegerChoiches
         ('normal', "normal (jeopardy quals, a/d finals)"),
         ('king_of_the_hill', "King of the Hill"), ]
 FLAG_MAX_LEN = 300

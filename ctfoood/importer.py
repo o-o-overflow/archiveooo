@@ -342,7 +342,7 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
         if chal.type != chaltype:
             logging.warning("Adjusting challenge type: %s -> %s", chal.type, chaltype)
             all_output += "Adjusting challenge type: %s -> %s" % (chal.type, chaltype)
-            assert chaltype in TYPE_CHOICES
+            assert chaltype in [ tc[0] for tc in TYPE_CHOICES ]
             chal.type = chaltype
             chal.full_clean()
             chal.save()
