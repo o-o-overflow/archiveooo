@@ -4,12 +4,16 @@ from django.db import transaction
 import django.utils.timezone
 import ipaddress
 import logging
+import os
 import re
+import subprocess
+import time
 import boto3
 from typing import Tuple, Optional
 from .models import ChalCheckout, VM
 
 logger = logging.getLogger("OOO")
+
 
 
 USER_DATA_FMT="""
@@ -44,6 +48,46 @@ runcmd:
 """
 # ^^^ For simplicity, reduced to one IPv4 net for iptables
 # TODO: docker won't work, need to restrict output iface only - iptables -P OUTPUT DROP
+
+
+def find_ubuntu_ami():
+    UBUNTU_RELEASE_NAME = 'focal'
+    RELEASES_TABLE_URL = 'https://cloud-images.ubuntu.com/locator/ec2/releasesTable'
+    from jsoncomment import JsonComment
+    jsonp = JsonComment()  # Last array element has a comma too
+    cache_dir = os.getenv('XDG_RUNTIME_DIR', '/tmp')
+    cache_filename = os.path.join(cache_dir, 'releasesTable')
+    cache_is_old = True
+    if os.path.exists(cache_filename):
+        cache_mtime = os.path.getmtime(cache_filename)
+        cache_age = time.time() - cache_mtime
+        if cache_age < 3600:
+            logger.debug("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
+                    cache_age, cache_age//60, cache_age//60//60)
+            cache_is_old = False
+        else:
+            logger.debug("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
+                    cache_age, cache_age//60, cache_age//60//60)
+    if cache_is_old:
+        subprocess.check_call(['wget', '-nv', '-N', RELEASES_TABLE_URL], cwd=cache_dir)
+    j = jsonp.loadf(cache_filename)['aaData']
+    assert len(j[0]) == 8
+    #[['us-west-2',
+    #  'focal',
+    #  '20.04 LTS',
+    #  'amd64',
+    #  'hvm:ebs-ssd',
+    #  '20200729',
+    #  '<a href="https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-056cb9ae6e2df09e8">ami-056cb9ae6e2df09e8</a>',
+    #  'hvm']]
+    matching = max((x for x in j if x[0]=='us-west-2' and x[1]==UBUNTU_RELEASE_NAME and x[3]=='amd64'), key=lambda y: y[5])
+    latest_date = matching[5]
+    latest_matching = [ x for x in j if x[0]=='us-west-2' and x[1]==UBUNTU_RELEASE_NAME and x[3]=='amd64' and x[5] == latest_date ]
+    assert len(latest_matching) == 1, "More than one possible Ubuntu image! Select by hvm type? Matched: {}".format(latest_matching)
+    a = matching[6]
+    ami = re.search(r'launchAmi=([a-z0-9-]+)', a).group(1)
+    return ami
+
 
 def get_ec2():
     # TODO: should it have its own credentials?
@@ -138,6 +182,9 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     logger.info("Received request to spawn a container for %s", checkout)
     logger.info("Netmask allowed to connect: %s", net)
 
+    _progress("Finding the current Ubuntu image ID...")
+    ubuntu_ami = find_ubuntu_ami()
+
     sg = None
     instance = None
     try:
@@ -166,7 +213,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
                 my_domain_name=plain_domain_name,
                 player_ip=str(net)),
             MaxCount=1, MinCount=1,
-            ImageId='ami-005e54dee72cc1d00',  # Ubuntu 20.04
+            ImageId=ubuntu_ami,
             InstanceType='t2.nano',
 
             KeyName='for_archive_player_vms',

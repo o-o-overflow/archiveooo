@@ -5,10 +5,11 @@ django-ipware
 pyyaml
 coloredlogs
 markdown
+jsoncomment
 
 # Optionally, see DATABASES
 #mysqlclient
 psycopg2
 
-# Optionally, to store public files / images
+# Optionally, to store public files / images + spawn VMs
 boto3
