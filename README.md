@@ -59,6 +59,23 @@ What is public is one main checkout for each challenge. The archive page shows t
 
 The Django admin interface serves as the main editor + a private per-challenge page that can be used to auto-pull a new checkout from git.
 
+## CLI
+
+```
+. ~/archiveooo/env/bin/activate
+cd ~/archiveooo/
+
+./import.py -h
+./spawn.py -h
+
+./import.py --create-chal --run-tester know_your_mem git@github.com:Jacopo/know_your_mem_private_fixed.git
+#                                      ^             ^
+#           [opts]                     chal name     git repository, can be private
+
+./spawn.py --print-banner 1
+#                         ^
+#          [opts]         checkout_id
+```
 
 ## Code
 The code is not super-clean, but it's not that dirty either.
