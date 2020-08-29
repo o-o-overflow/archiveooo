@@ -63,14 +63,17 @@ The Django admin interface serves as the main editor + a private per-challenge p
 ## Code
 The code is not super-clean, but it's not that dirty either.
 
-`ctfoood` is the django app inside the `archiveooo` project. Splitting them should be fairly easy, but they really go together in practice. URLs are expected to map to the site root's (e.g., `/c/chal` not `/foo/c/chal`) -- wouldn't be too hard to change if desired.
+`ctfoood` is the django app inside the `archiveooo` project.
 
-Site-specific config items go in `archiveooo/local_settings_outside_git.py`. The config needs to know its domain name and IPv4 to construct pingback curl commands from the VM. Domains different than archive.ooo are supported (in fact, we run it on multiple domains, including one that is not fronted by CloudFront and one that is for internal development).
+Splitting them should be fairly easy, but they really go together in practice. Similarly, URLs are expected to map to the site root's (e.g., `/c/chal` not `/foo/c/chal`) -- wouldn't be too hard to change if desired.
+
+There are some special Tags and Achievements: for instance, speedrun-tagged challenges get a special message.
+
+
+## Deployment
+
+See the [_server_setup](./_server_setup) folder for more info.
+
+Note that the config needs to know its domain name and IPv4 to construct pingback curl commands from the VM. Domains different than archive.ooo are supported (in fact, we run it on multiple domains, including one that is not fronted by CloudFront and one that is for internal development).
 
 Our production deployment uses Postgres and Apache with `mod_wsgi`. The development one uses nginx and SQLite.
-
-A cron script is expected to run periodically to ensure VM deletion. Another runs periodically to remove all old docker images and processes.
-
-See the `_server_setup` folder for more info.
-
-There are special Tags and Achievements: for instance, speedrun-tagged challenges get a special message.
