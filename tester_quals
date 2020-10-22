@@ -161,6 +161,7 @@ def build_service():
         build_args = ""
         if service_conf.get('copy_flag_using_build_arg'):
             build_args = "--build-arg THE_FLAG='%s'" % service_conf["flag"]
+            _LOG.info("passing %s", build_args)
         assert dsystem("docker build %s -t %s %s/service" % (build_args, image_tag, service_dir)) == 0, "service docker image build failed"
     else:
         _LOG.warning("no dockerfile found for service...")

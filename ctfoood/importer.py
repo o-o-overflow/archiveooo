@@ -371,9 +371,14 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
 
         #### 4. docker build (not ./tester build)
         if os.path.exists(os.path.join(destdir, "service", "Dockerfile")):
-            # TODO: copy_flag_using_build_arg?
             # Mimics tester build_service(), but with a custom tag
-            cmd = ['docker','build', '-t', checkout.get_imgtag(), "."]
+            cmd = ['docker','build']
+            if y.get('copy_flag_using_build_arg'):
+                # TODO: It would be cool to rebuild at every invocation with random flags
+                #       Right now very few chals have copy_flag_using_build_arg=True
+                cmd += ["--build-arg", "THE_FLAG='%s'" % flag ]
+                logger.debug("copy_flag_using_build_arg is true, passing arg THE_FLAG='%s'", flag)
+            cmd += ['-t', checkout.get_imgtag(), "."]
             all_output += "\n\n[*] Will run " + ' '.join(shlex.quote(x) for x in cmd) + '\n'
             logger.info("docker build -t %s", checkout.get_imgtag())
             returncode, cmdoutput = _runcmd(cmd, cwd=os.path.join(destdir,"service"),
