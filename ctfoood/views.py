@@ -163,8 +163,7 @@ def homepage(request):
 
 
 @require_safe
-@vary_on_cookie
-@cache_control(must_revalidate=True)
+@never_cache  # for some reason, must_revalidate and vary_on_cookie were not enough on the private view (when accessed via cloudfront)
 def chalpage(request, name):
     chal = get_object_or_404(Chal, name=name)
     if chal.has_private_access(request.user):
