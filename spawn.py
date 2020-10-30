@@ -75,8 +75,6 @@ def main():
         return 1
 
     print(f"Success: spawned VM id={vmid} uuid={uuid}", file=sys.stderr)
-    if not args.wait:
-        return 0
 
     vm = VM.objects.get(id=vmid)
     logger.debug("Waiting for the VM to report it's finished booting...")
@@ -84,6 +82,9 @@ def main():
     while 'finished' not in vm.latest_user_message.lower():
         if not vm.ip:
             update_vm_ip(vm)
+            if not args.wait:
+                return 0
+
         vm.refresh_from_db()
         if logger.level <= logging.INFO:
             print(vm.latest_user_message, end="          \r")
