@@ -82,8 +82,6 @@ def main():
     logger.debug("Waiting for the VM to report it's finished booting...")
     time.sleep(5)
     while 'finished' not in vm.latest_user_message.lower():
-        if not vm.ip:
-            update_vm_ip(vm)
         vm.refresh_from_db()
         if logger.level <= logging.INFO:
             print(vm.latest_user_message, end="          \r")

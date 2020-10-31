@@ -399,6 +399,9 @@ def profile(request, username):
 def vm_pingback(request, vmid, uuid):
     vm = get_object_or_404(VM, id=vmid, pingback_uuid=uuid)
     logging.info("[vm %s]: %s", vm, request.POST.get('msg'))
+    if not vm.ip:
+        update_vm_ip(vm)
+        vm.refresh_from_db()
     vm.pingback_received = True
     ts = django.utils.timezone.now().strftime("%H:%M:%S %Z")
     msg = request.POST.get('msg', '')
