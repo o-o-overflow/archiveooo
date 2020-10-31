@@ -44,7 +44,7 @@ def main():
     # TODO: Also enumerate in Amazon, using separate credentials
     #       Tags?
 
-    for vm in VM.objects.all():
+    for vm in VM.objects.filter(deleted=False).all():
         dt = now - vm.creation_time
         if dt < max_dt:
             logger.debug("Leaving young VM %s alone (age: %s)", vm, dt)
