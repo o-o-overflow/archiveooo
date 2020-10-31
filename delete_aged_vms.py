@@ -50,11 +50,11 @@ def main():
             logger.debug("Leaving young VM %s alone (age: %s)", vm, dt)
             continue
         logger.debug("Deleting VM %s (age: %s)", vm, dt)
-        success = delete_ooo_vm(vm)
-        if success:
+        errcode, output = delete_ooo_vm(vm)
+        if errcode == 0:
             logger.debug("Successfully deleted %s", vm)
         else:
-            logger.error("Error during deletion of %s", vm)
+            logger.error("Error during deletion of %s: %s", vm, output)
 
 
 if __name__ == "__main__":

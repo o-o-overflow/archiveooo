@@ -36,12 +36,12 @@ def main():
 
 
     vm = VM.objects.get(id=args.vmid)
-    success = delete_ooo_vm(vm)
-    if success:
+    errcode, output = delete_ooo_vm(vm)
+    if errcode == 0:
         logger.info("Successfully deleted %s", vm)
         return 0
     else:
-        logger.error("FAILED to delete %s", vm)
+        logger.error("FAILED to delete %s: %s", vm, output)
         return 1
 
 

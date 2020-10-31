@@ -263,7 +263,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
         return None, None
 
 
-def delete_ooo_vm(vm:VM) -> Tuple[int,str]:
+def delete_ooo_vm(vm:VM, raise_exceptions=False) -> Tuple[int,str]:
     all_output = "[ ] Deletion started...\n"
     try:
         ec2 = get_ec2()
@@ -294,6 +294,8 @@ def delete_ooo_vm(vm:VM) -> Tuple[int,str]:
             vm.save()
         return 0, all_output
     except Exception as e:
+        if raise_exceptions:
+            raise
         return 99, "Got exception %s %s" % (type(e), e)
 
 
