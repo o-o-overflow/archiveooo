@@ -27,7 +27,7 @@ def main():
 
     from ctfoood.spawner import spawn_ooo, update_vm_ip
     from ctfoood.importer import test_deployed
-    from ctfoood.models import ChalCheckout, VM
+    from ctfoood.models import Chal, ChalCheckout, VM
     from django.contrib.auth.models import User
 
 
@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--test", action='store_true', help="Will run: tester test_deployed exploit (ip) (port)")
     parser.add_argument("--healthcheck", action='store_true', help="Will just run tester healthcheck (ip) (port)")
     parser.add_argument("--log-level", metavar='LEVEL', default="DEBUG", help="Default: DEBUG")
-    parser.add_argument("what", type=int, metavar='CHECKOUT_ID', help="ID of the checkout")
+    parser.add_argument("what", metavar='WHAT', help="Either a numeric checkout ID or a challenge name (=> its latest checkout).")
     parser.add_argument("net", nargs='?', default="0.0.0.0/0", metavar="IP/mask", help="IPs allowed to connect")
     advanced = parser.add_argument_group('Advanced')
     advanced.add_argument("--user", help="Username (default: user with the lowest id)")
@@ -57,8 +57,16 @@ def main():
         user = User.objects.order_by('id')[0]
     assert user, "No user found with that name (if passed, otherwise the db may simply not have any user)"
 
-    checkout = ChalCheckout.objects.get(id=args.what)
-    assert checkout
+    if args.what.isdigit():
+        checkout_id = int(args.what)
+    else:
+        chal = Chal.objects.filter(name=args.what).first()
+        assert chal, "'{}' is neither a challenge name nor an integer checkout ID".format(args.what)
+        latest = chal.checkouts.order_by('-id').first()
+        assert latest, "No checkouts found for Chal {} ({})".format(chal, latest)
+        checkout_id = latest.id
+        logger.debug("Spawning the latest checkout for %s: %s", chal, checkout_id)
+    checkout = ChalCheckout.objects.get(id=checkout_id)
 
     if '/' not in args.net:
         args.net += '/32'
