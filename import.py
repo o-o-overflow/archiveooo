@@ -56,7 +56,7 @@ def main():
     advanced.add_argument("--user", help="Username (default: user with the lowest id)")
     advanced.add_argument("--group", help="Group name (default: the user's), only for --create-chal")
     advanced.add_argument("--no-cleanup", action="store_true", help="Would normally cleanup by grepping 'docker ps' and 'docker images' for the challenge name")
-    forcreatechal = parser.add_argument_group('For --crate-chal')
+    forcreatechal = parser.add_argument_group('For --create-chal')
     forcreatechal.add_argument("--format", help="Only used with --create-chal (default: reads it from the git url)")
     forcreatechal.add_argument("--accept-unclean", action="store_true", help="Would normally reject name collisions and the like -- but it's fine if we're sure we're importing only one challenge at a time")
 
@@ -101,11 +101,14 @@ def main():
 
         source_url = f"https://github.com/o-o-overflow/{y}-{args.chalname}"
         source_url_public = source_url + "-public"
+        logger.debug("Checking if there's a separate public repo...")
         if is_url_valid(source_url_public):
             source_url = source_url_public
         if not is_url_valid(source_url):
             source_url = ""
             logger.info("No auto-created public source URL was valid for %s (players will get no link)", args.chalname)
+        else:
+            logger.debug("Public source URL set to: %s (players will get this link)", source_url)
 
         chal = Chal.objects.create(name=args.chalname, format=y, type='normal',
                 owner_user=user, owner_group=group, autopull_url=args.pull_from,
