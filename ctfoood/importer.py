@@ -290,9 +290,14 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             existing_checkout.ran_test_deployed = True
             existing_checkout.tester_output += "\n\n\n--- test_deployed ---\n\n"
             existing_checkout.tester_output += all_output
-            if tester_gave_errors: existing_checkout.tester_gave_errors = True
-            if tester_gave_warnings: existing_checkout.tester_gave_warnings = True
             existing_checkout.save()
+            all_output += "\n[ ] just_test_deployed finished, see the output above (also added to the db)   {}\n".format(just_test_deployed)
+            if tester_gave_errors:
+                existing_checkout.tester_gave_errors = True
+                all_output += "[E] I think there were errors (see output)\n"
+            if tester_gave_warnings:
+                existing_checkout.tester_gave_warnings = True
+                all_output += "[W] I think there were warnings (see output)\n"
             return 0, all_output, None
 
 
