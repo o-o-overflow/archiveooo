@@ -1,4 +1,4 @@
-django <= 3.1
+django < 3.2
 dj-database-url
 django-ipware
 
