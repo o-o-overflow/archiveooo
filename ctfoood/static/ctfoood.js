@@ -53,8 +53,10 @@ function vm_status_update(e) {
     if (vmip) {
         document.getElementById('vm_ip').innerText = vmip + ":" + vmport;
         l = document.getElementById('run_test_deployed');
-        l.href = l.href + "/" + vmid;
-        l.style.display = "inline";
+        if (!l.href.endsWith("/" + vmid)) {  // This function is called periodically
+            l.href = l.href + "/" + vmid;
+            l.style.display = "inline";
+        }
     }
 }
 
