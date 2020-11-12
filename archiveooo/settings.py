@@ -38,6 +38,12 @@ DOCKERHUB_REPO = None
 DEFAULT_FROM_EMAIL = "archive@archive.ooo"
 
 
+# Slight paranoia
+SESSION_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'Strict'
+CSRF_COOKIE_SECURE = True
+
 
 #####################################################################
 # Settings can be kept outside git...
