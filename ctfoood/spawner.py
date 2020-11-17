@@ -33,6 +33,7 @@ runcmd:
  - [ bash, -c, "echo {my_ip} {my_domain_name} >> /etc/hosts" ]
  - iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT
  - iptables -A OUTPUT -o lo -j ACCEPT
+ - iptables -A OUTPUT -d '169.254.0.0/16' -j DROP
  - iptables -A OUTPUT -d "{my_ip_net}" -j ACCEPT
  - iptables -A OUTPUT -d "{player_ip}" -j ACCEPT
  - [ bash, -c, 'ip6tables -P INPUT DROP || true &>/dev/null' ]
