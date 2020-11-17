@@ -363,6 +363,8 @@ class VM(models.Model):
 
     latest_user_message = models.CharField(max_length=200, blank=True)
 
+    removed_metadata_access = models.BooleanField(default=False)
+
     # Record what was used
     credentials = models.ForeignKey(APICredential, on_delete=models.CASCADE,
             blank=True, null=True, help_text="Empty == OOO's base")

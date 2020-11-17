@@ -90,7 +90,7 @@ def find_ubuntu_ami():
     return ami
 
 
-def get_ec2():
+def get_boto3_session():
     # TODO: should it have its own credentials?
     p = settings.AWS_PROFILE
     avail = boto3.Session().available_profiles
@@ -98,7 +98,10 @@ def get_ec2():
             region_name='us-west-2',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-    return session.resource("ec2")
+    return session
+
+def get_ec2():
+    return get_boto3_session().resource("ec2")
 
 
 # XXX: switched to single IPv4Network for simplicity
@@ -319,6 +322,25 @@ def minimize_egress(vm: VM) -> bool:
         return True
     except:
         logger.exception("minimize_egress failed")
+        return False
+
+
+def disable_metadata_access(vm: VM) -> bool:
+    # I believe the identity provided by the metadata has no permissions.
+    # It's also blocked via iptables. But... let's also disable it altogether.
+    # Note that we can't disable it on instance creation, since that's how
+    # the keys and user-data are set up by cloud-init.
+    try:
+        logging.debug("Disabling of the metadata HTTP endpoint...")
+        ec2_client = get_boto3_session().client('ec2')
+        resp = ec2_client.modify_instance_metadata_options(
+                InstanceId=vm.instance_id,
+                HttpEndpoint='disabled')
+        assert resp['InstanceMetadataOptions']['HttpEndpoint'] == 'disabled'
+        logging.info("Requested disabling of the metadata HTTP endpoint")
+        return True
+    except:
+        logger.exception("disable_metadata_access failed")
         return False
 
 

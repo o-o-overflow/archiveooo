@@ -26,7 +26,7 @@ from markdown import markdown
 from .models import Chal, ChalCheckout, UserSettings, Achievement, Tag, VM
 from .importer import do_autopull, test_deployed
 from .helpers import get_user_ip
-from .spawner import spawn_ooo, delete_ooo_vm, minimize_egress, update_vm_ip
+from .spawner import spawn_ooo, delete_ooo_vm, minimize_egress, disable_metadata_access, update_vm_ip
 from .containering import push_to_dockerhub
 
 
@@ -407,6 +407,12 @@ def vm_pingback(request, vmid, uuid):
     msg = request.POST.get('msg', '')
     vm.messagelog += f"[{ts}] {msg}\n"
     vm.latest_user_message = msg;
+    if not vm.removed_metadata_access:
+        if disable_metadata_access(vm):
+            vm.messagelog += "(requested disabling AWS metadata access)\n"
+            vm.removed_metadata_access = True
+        else:
+            vm.messagelog += "LOCAL ERROR IN DISABLING AWS METADATA ACCESS\n"
     if any(x in msg.lower() for x in ('final network settings', 'finished')):  # In case we miss the first one
         logging.info("%s reached the point at which we can minimize egress", vm)
         if minimize_egress(vm):
