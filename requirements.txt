@@ -5,7 +5,6 @@ django-ipware
 pyyaml
 coloredlogs
 markdown
-jsoncomment
 
 # Optionally, see DATABASES
 #mysqlclient

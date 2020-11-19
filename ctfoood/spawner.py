@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 import django.utils.timezone
 import ipaddress
+import json
 import logging
 import os
 import re
@@ -52,45 +53,37 @@ runcmd:
 
 
 def find_ubuntu_ami():
-    UBUNTU_RELEASE_NAME = 'focal'
-    # Official (outdated) releases only, different format: RELEASES_TABLE_URL = 'https://cloud-images.ubuntu.com/locator/ec2/releasesTable'
-    # Alternatively: https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json
-    RELEASES_TABLE_URL = 'https://cloud-images.ubuntu.com/locator/daily/releasesTable' # Daily
-    from jsoncomment import JsonComment
-    jsonp = JsonComment()  # Last array element has a comma too
+    PRODUCT = 'com.ubuntu.cloud.daily:server:20.04:amd64'
+    DAILY_JSON_URL = 'https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json'
     cache_dir = os.getenv('XDG_RUNTIME_DIR', '/tmp')
-    cache_filename = os.path.join(cache_dir, 'releasesTable')
+    cache_filename = os.path.join(cache_dir, 'com.ubuntu.cloud:daily:aws.json')
     cache_is_old = True
     if os.path.exists(cache_filename):
         cache_mtime = os.path.getmtime(cache_filename)
         cache_age = time.time() - cache_mtime
         if cache_age < 4*60*60:  # 4 hours
-            logger.debug("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
+            print("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
             cache_is_old = False
         else:
-            logger.debug("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
+            print("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
     if cache_is_old:
-        subprocess.check_call(['wget', '-nv', '-N', RELEASES_TABLE_URL], cwd=cache_dir)
-    j = jsonp.loadf(cache_filename)['aaData']
-    assert len(j[0]) == 8
-    # ['Amazon AWS',
-    # 'us-west-2',
-    # 'focal',
-    # 'com.ubuntu.cloud.daily:server:20.04',
-    # 'amd64',
-    # 'hvm-ssd',
-    # '20201111',
-    # '<a href="https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-0c9b0a97492ebfcdb">ami-0c9b0a97492ebfcdb</a>'],
-    matching = sorted((x for x in j if
-        x[0]=='Amazon AWS' and x[1] == 'us-west-2' and x[2] == UBUNTU_RELEASE_NAME and x[4] == 'amd64'),
-        key=lambda y: y[6], reverse=True)  # latest date on top
-    if len(matching) > 1:
-        assert matching[1][6] < matching[0][6], "More than one viable Ubuntu image built on the most recent day! Matched: {}".format(matching)
-    link = matching[0][7]
-    ami = re.search(r'launchAmi=([a-z0-9-]+)', link).group(1)
-    return ami
+        subprocess.check_call(['wget', '-nv', '-N', DAILY_JSON_URL], cwd=cache_dir)
+    with open(cache_filename) as cf:
+        j = json.load(cf)
+    assert j['format'] == 'products:1.0'
+    assert j['datatype'] == 'image-ids'
+    assert j['content_id'] == 'com.ubuntu.cloud:daily:aws'
+    p = j['products'][PRODUCT]
+    assert p['supported']
+    latest_ver_num = max(p['versions'])
+    latest_ver = p['versions'][latest_ver_num]
+    items = latest_ver['items'].values()  # Not sure if item keys are stable. If so, could directly select usww2hs (us-west-2, hvm, ssd?)
+    matching = [ x for x in items if x['crsn'] == 'us-west-2' ]  # and x['virt'] == 'hvm' and x['root_store'] == 'ssd'
+    assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
+    ami = matching[0]
+    return ami['id']
 
 
 def get_boto3_session():
