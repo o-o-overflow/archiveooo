@@ -214,7 +214,7 @@
 {% if user.is_authenticated %}
     <form action="{% url 'spawn_vm_on_ooo' checkout.id %}" target="_blank" method="post" id="spawn_on_ooo_form">
         {% csrf_token %}
-        <p><label style="vertical-align: middle" for="ooo_ip_whitelist" title="The firewall will also include this machine (TODO: get_ooo_host_ip) to download the pre-built service image.">IPv4 to allow connections from:</label>
+        <p><label style="vertical-align: middle" for="ooo_allowed_ip" title="Specify your own IP address. The VM will allow connections from this IP. Only IPv4 is currently supported.">IPv4 to allow connections from:</label>
 	<input type="text" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" required style="vertical-align: middle" id="ooo_allowed_ip" name="ooo_allowed_ip"
 		placeholder="your IP address" value="{{ user_ip }}">
 	<p><input type="checkbox" required id="i_will_be_good" name="i_will_be_good">
