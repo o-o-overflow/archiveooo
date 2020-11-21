@@ -61,12 +61,12 @@ def find_ubuntu_ami():
     if os.path.exists(cache_filename):
         cache_mtime = os.path.getmtime(cache_filename)
         cache_age = time.time() - cache_mtime
-        if cache_age < 4*60*60:  # 4 hours
-            print("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
+        if cache_age < 24*60*60:  # 24 hours
+            logger.info("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
             cache_is_old = False
         else:
-            print("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
+            logger.info("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
     if cache_is_old:
         subprocess.check_call(['wget', '-nv', '-N', DAILY_JSON_URL], cwd=cache_dir)
