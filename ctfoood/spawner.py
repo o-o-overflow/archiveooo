@@ -69,7 +69,10 @@ def find_ubuntu_ami():
             logger.info("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
     if cache_is_old:
-        subprocess.check_call(['wget', '-nv', '-N', DAILY_JSON_URL], cwd=cache_dir)
+        wget = subprocess.run(['wget', '-nv', '-N', DAILY_JSON_URL], cwd=cache_dir,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        if wget.returncode != 0:
+            logger.critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
     with open(cache_filename) as cf:
         j = json.load(cf)
     assert j['format'] == 'products:1.0'
