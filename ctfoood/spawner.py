@@ -55,24 +55,33 @@ runcmd:
 def find_ubuntu_ami():
     PRODUCT = 'com.ubuntu.cloud.daily:server:20.04:amd64'
     DAILY_JSON_URL = 'https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json'
-    cache_dir = os.getenv('XDG_RUNTIME_DIR', '/tmp')
+    if os.getenv('XDG_RUNTIME_DIR'):
+        cache_dir = os.getenv('XDG_RUNTIME_DIR')
+    else:
+        cache_dir = '/tmp/dailyjson_%s' % os.getuid()
+        os.makedirs(cache_dir, exist_ok=True)
     cache_filename = os.path.join(cache_dir, 'com.ubuntu.cloud:daily:aws.json')
     cache_is_old = True
     if os.path.exists(cache_filename):
         cache_mtime = os.path.getmtime(cache_filename)
         cache_age = time.time() - cache_mtime
-        if cache_age < 24*60*60:  # 24 hours
-            logger.info("The ubuntu releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
+        if cache_age < 6*60*60:  # 6 hours -- unclear if there's a rate limit or not
+            logger.debug("The ubuntu AMI releases cache-file is new enough (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
             cache_is_old = False
         else:
-            logger.info("The ubuntu releases cache-file is too old (%d seconds = %d minutes = %d hours)",
+            logger.debug("The ubuntu AMI releases cache-file is too old (%d seconds = %d minutes = %d hours)",
                     cache_age, cache_age//60, cache_age//60//60)
+    else:
+        logger.debug("No ubuntu AMI releases cache-file, downloading a new one")
     if cache_is_old:
         wget = subprocess.run(['wget', '-nv', '-N', DAILY_JSON_URL], cwd=cache_dir,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         if wget.returncode != 0:
             logger.critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
+            #if raise_on_fetch_error:
+            #    msg = "Failed to wget the new ubuntu daily file!!!\nStdout: %s\nStderr: %s" % (wget.stdout, wget.stderr)
+            #    raise RuntimeError(msg)
     with open(cache_filename) as cf:
         j = json.load(cf)
     assert j['format'] == 'products:1.0'
@@ -81,6 +90,7 @@ def find_ubuntu_ami():
     p = j['products'][PRODUCT]
     assert p['supported']
     latest_ver_num = max(p['versions'])
+    logger.debug("Ubuntu's daily AMI JSON dates to %s, latest version: %s", j['updated'], latest_ver_num)
     latest_ver = p['versions'][latest_ver_num]
     items = latest_ver['items'].values()  # Not sure if item keys are stable. If so, could directly select usww2hs (us-west-2, hvm, ssd?)
     matching = [ x for x in items if x['crsn'] == 'us-west-2' ]  # and x['virt'] == 'hvm' and x['root_store'] == 'ssd'
