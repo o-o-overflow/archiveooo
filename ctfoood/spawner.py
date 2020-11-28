@@ -79,6 +79,8 @@ def find_ubuntu_ami():
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         if wget.returncode != 0:
             logger.critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
+            logging.getLogger('django').critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
+            # ^^ Should email me. TODO: setup AdminEmailHandler for the OOO logger ^^
             #if raise_on_fetch_error:
             #    msg = "Failed to wget the new ubuntu daily file!!!\nStdout: %s\nStderr: %s" % (wget.stdout, wget.stderr)
             #    raise RuntimeError(msg)
