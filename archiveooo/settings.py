@@ -36,6 +36,7 @@ DOCKERHUB_REPO = None
 
 # If setting up email sending
 DEFAULT_FROM_EMAIL = "archive@archive.ooo"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 
 # Slight paranoia
