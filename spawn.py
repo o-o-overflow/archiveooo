@@ -32,6 +32,7 @@ def main():
 
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--collect-data", dest='collect_data', action='store_true', help="Will collect data for study")
     parser.add_argument("--wait", action='store_true', help="Wait for the VM to finish booting")
     parser.add_argument("--print-banner", action='store_true', help="Will connect to print the server banner")
     parser.add_argument("--test", action='store_true', help="Will run: tester test_deployed exploit (ip) (port)")
@@ -76,6 +77,7 @@ def main():
     vmid, uuid = spawn_ooo(checkout,
             net=args.net,
             user=user,
+            collect_data=args.collect_data,
             instant_cleanup=args.instant_cleanup)
 
     if not vmid:

@@ -371,6 +371,9 @@ class VM(models.Model):
     vm_setup = models.ForeignKey(VMSetup, blank=True, null=True, on_delete=models.SET_NULL,
             verbose_name="VM setup")
 
+    # For the study
+    study_opted_in = models.BooleanField(default=False)
+
     # TODO: liveness check?
     def __str__(self):
         return f"{self.ip}:{self.checkout.exposed_port} for {self.checkout.chal}, id {self.id}"

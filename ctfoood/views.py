@@ -299,6 +299,8 @@ def spawn_vm_on_ooo(request, checkoutid):
     if request.POST.get('i_will_be_good', default='') != 'true':
         raise PermissionDenied
 
+    collect_data = (request.POST.get('i_am_opting_in_for_data_collection', default='') == 'true')
+
     ip_str = request.POST.get('ooo_allowed_ip')
     if not ip_str:
         raise PermissionDenied
@@ -318,7 +320,7 @@ def spawn_vm_on_ooo(request, checkoutid):
         messages.error(request, "Invalid IP address.")
         return redirect(checkout)
 
-    vmid, uuid = spawn_ooo(checkout=checkout, net=net, user=request.user)
+    vmid, uuid = spawn_ooo(checkout=checkout, net=net, user=request.user, collect_data=collect_data)
     resp = f"{vmid},{uuid}" if vmid else "FAILED"
     return HttpResponse(resp, status=200 if vmid else 500)
 

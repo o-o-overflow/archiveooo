@@ -28,6 +28,7 @@ runcmd:
  - mkdir /root/.ssh
  - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo precisa ed2' > /root/.ssh/authorized_keys" ]
  - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFfCTUJHvZeiPHp78ZrtT0T4KTLY5md3z0oebMrkJOjO chromebook_postcina' >> /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKzeW2s7ABiFuuRxM98F4AV+e9it2g/7qWZ2bG3R0iwPft8vaifSMZC+YfWlLtRq1Jvsabab6SjaklNcrT8gDGSOkkLv1rGqG/yo6MP9AJY5CfYyMypUN5tq3XTU8EffkxD4RRHCIRhnZeoe0HOKzxmWd9ERUSHZpskFKAY5rdWqLTGSDqXXkci5mvmHoymvx00dkLZEaL1/niFtsKFaCwEsP0vmikxBgnf2ILrcx8QGfP4KbiIBZ84KUG8JH4uGPI55wxtpQ+0eAexXlbKVMMYKt19aOTZ/ytRr5dwS3SCf6qCUXLpD60PqjYkl9lrTB4L8/E443uv18a9vfbW8W1 purv' >> /root/.ssh/authorized_keys" ]
  - curl -sSL "{pingback_url}" -d "msg=Downloading the container..."
  - curl -sSL "{checkout.docker_image_tgzurl}" > /chal.tgz
  - curl -sSL "{pingback_url}" -d "msg=Setting up the network..."
@@ -167,6 +168,7 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2):
 
 
 def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[User],
+        collect_data: bool = False,
         instant_cleanup=False) -> Tuple[Optional[str],Optional[str]]:
     """Returns vm.id, vm.uuid"""
     vm = None
@@ -196,6 +198,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
 
     logger.info("Received request to spawn a container for %s", checkout)
     logger.info("Netmask allowed to connect: %s", net)
+    logger.info("Study opt-in: %s", collect_data)
 
     _progress("Finding the current Ubuntu image ID...")
     ubuntu_ami = find_ubuntu_ami()
@@ -204,7 +207,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     instance = None
     try:
         vm = VM.objects.create(checkout=checkout, creation_user=user,
-                flag=checkout.default_flag)
+                flag=checkout.default_flag, study_opted_in=collect_data)
         vm.full_clean()
         vm.save()
         logger.info("Internal VM ID: %d", vm.id)
