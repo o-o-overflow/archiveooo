@@ -199,8 +199,8 @@ def checkoutpage(request, chalname, checkoutid):
                 add_solve(request.user, chal, request)
 
     # |linebreaks applied afterwards
-    main_description = markdown(checkout.description, output_format='html5')
-    extra_description = markdown(chal.extra_description, output_format='html5')
+    main_description = markdown(checkout.description, output_format='html')
+    extra_description = markdown(chal.extra_description, output_format='html')
 
     special = None
     chal_type_description = 'a jeopardy'  # This was ___ challenge from {format}
