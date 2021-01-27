@@ -296,7 +296,7 @@ def spawn_vm_on_ooo(request, checkoutid):
     if not valid_recaptcha(request):
         raise PermissionDenied
 
-    if not request.POST.get('i_will_be_good'):
+    if request.POST.get('i_will_be_good', default='') != 'true':
         raise PermissionDenied
 
     ip_str = request.POST.get('ooo_allowed_ip')
