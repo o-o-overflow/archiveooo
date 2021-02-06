@@ -18,6 +18,8 @@ from .models import ChalCheckout, VM
 logger = logging.getLogger("OOO")
 
 
+# TODO: keep in sync the study/non-study versions
+# TODO: docker won't work, need to restrict output iface only - iptables -P OUTPUT DROP
 
 USER_DATA_FMT="""
 #cloud-config
@@ -51,8 +53,49 @@ runcmd:
  - curl -sSL "{pingback_url}" -d "msg=Finished, activated the final network settings."
  - iptables -D OUTPUT -d "{my_ip_net}" -j ACCEPT
 """
-# ^^^ For simplicity, reduced to one IPv4 net for iptables
-# TODO: docker won't work, need to restrict output iface only - iptables -P OUTPUT DROP
+
+USER_DATA_FMT_STUDY="""
+#cloud-config
+repo_update: true
+packages:
+ - docker.io
+ - awscli
+runcmd:
+ - [ sh, -c, "echo poweroff | at now + 25 minutes" ]
+ - [ sh, -c, "date > /tmp/userdata_ran_at" ]
+ - mkdir /root/.ssh
+ - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo precisa ed2' > /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFfCTUJHvZeiPHp78ZrtT0T4KTLY5md3z0oebMrkJOjO chromebook_postcina' >> /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKzeW2s7ABiFuuRxM98F4AV+e9it2g/7qWZ2bG3R0iwPft8vaifSMZC+YfWlLtRq1Jvsabab6SjaklNcrT8gDGSOkkLv1rGqG/yo6MP9AJY5CfYyMypUN5tq3XTU8EffkxD4RRHCIRhnZeoe0HOKzxmWd9ERUSHZpskFKAY5rdWqLTGSDqXXkci5mvmHoymvx00dkLZEaL1/niFtsKFaCwEsP0vmikxBgnf2ILrcx8QGfP4KbiIBZ84KUG8JH4uGPI55wxtpQ+0eAexXlbKVMMYKt19aOTZ/ytRr5dwS3SCf6qCUXLpD60PqjYkl9lrTB4L8/E443uv18a9vfbW8W1 purv' >> /root/.ssh/authorized_keys" ]
+ - curl -sSL "{pingback_url}" -d "msg=Downloading the container..."
+ - curl -sSL "{checkout.docker_image_tgzurl}" > /chal.tgz
+ - curl -sSL "{pingback_url}" -d "msg=Downloading the study system..."
+ - docker pull sysflowtelemetry/sf-collector
+ - curl -sSL "{pingback_url}" -d "msg=Setting up the study system..."
+ - aws configure set aws_access_key_id {aws_access_key_id_study}
+ - aws configure set aws_secret_access_key {aws_secret_access_key_study}
+ - aws configure set region {aws_default_region_study}
+ - mkdir /mnt/data
+ - tcpdump port {checkout.exposed_port} -C 15 -U -w /tmp/study_data.pcap &
+ - docker run -d --privileged --name sf-collector -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /mnt/data:/mnt/data -e INTERVAL=60 -e EXPORTER_ID=${{{rand_str}}} -e OUTPUT=/mnt/data/ -e FILTER="container.name!=sf-collector and container.name!=sf-exporter" --rm sysflowtelemetry/sf-collector
+ - curl -sSL "{pingback_url}" -d "msg=Setting up the network..."
+ - [ bash, -c, "echo {my_ip} {my_domain_name} >> /etc/hosts" ]
+ - iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT
+ - iptables -A OUTPUT -o lo -j ACCEPT
+ - iptables -A OUTPUT -d '169.254.0.0/16' -j DROP
+ - iptables -A OUTPUT -d "{my_ip_net}" -j ACCEPT
+ - iptables -A OUTPUT -d "{player_ip}" -j ACCEPT
+ - [ bash, -c, 'ip6tables -P INPUT DROP || true &>/dev/null' ]
+ - [ bash, -c, 'ip6tables -P OUTPUT DROP || true &>/dev/null' ]
+ - curl -sSL "{pingback_url}" -d "msg=Loading the container..."
+ - adduser --disabled-password --disabled-login --gecos "" runner
+ - adduser runner docker
+ - su runner -c "docker load -i /chal.tgz"
+ - curl -sSL "{pingback_url}" -d "msg=Starting the container..."
+ - su runner -c "docker run -p {checkout.exposed_port}:{checkout.exposed_port} -d --name chal $(docker images -q|head -n1)"
+ - curl -sSL "{pingback_url}" -d "msg=Finished, activated the final network settings."
+ - iptables -D OUTPUT -d "{my_ip_net}" -j ACCEPT
+"""
 
 
 def find_ubuntu_ami():
@@ -142,7 +185,7 @@ def sg_name(vm: VM):
     return "archiveplayervm%d" % vm.id
 
 def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2):
-    # TODO: VPC default OK?
+    # TODO: study version
     assert re.match(r'\d+\.\d+\.\d+\.\d+\Z', settings.MY_IP4)
     me_net = ipaddress.IPv4Network(settings.MY_IP4 + "/32")
 
@@ -232,24 +275,37 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
         vm.save()
         logger.info("Internal VM ID: %d", vm.id)
 
+        plain_domain_name = settings.MY_DOMAIN_NAME
+        if '@' in plain_domain_name:
+            plain_domain_name = plain_domain_name.split('@')[1]
+        userdata_params = dict(
+            checkout=checkout,
+            pingback_url=f"https://{settings.MY_DOMAIN_NAME}/vm_pingback/{vm.id}/{vm.pingback_uuid}/",
+            my_ip_net=settings.MY_IP4+'/32',
+            my_ip=settings.MY_IP4,
+            my_domain_name=plain_domain_name,
+            player_ip=str(net))
+        if collect_data:
+            userdata_params.update(
+                s3_bucket_study=settings.S3_BUCKET_STUDY,
+                aws_access_key_id_study=settings.AWS_ACCESS_KEY_ID_STUDY,
+                aws_secret_access_key_study=settings.AWS_SECRET_ACCESS_KEY_STUDY,
+                aws_default_region_study=settings.AWS_DEFAULT_REGION_STUDY,
+                epoch_time = creation_time,
+                rand_str = study_data_id)
+            user_data = USER_DATA_FMT_STUDY.format(**userdata_params)
+        else:
+            user_data = USER_DATA_FMT.format(**userdata_params)
+
         _act("Creating the security group...")
         sg = create_security_group(vm, net, ec2)
         vm.security_group_id = sg.id
         vm.save()
 
         _act("Creating the VM...")
-        plain_domain_name = settings.MY_DOMAIN_NAME
-        if '@' in plain_domain_name:
-            plain_domain_name = plain_domain_name.split('@')[1]
         instances = ec2.create_instances(
             SecurityGroupIds=[sg.id],
-            UserData=USER_DATA_FMT.format(
-                checkout=checkout,
-                pingback_url=f"https://{settings.MY_DOMAIN_NAME}/vm_pingback/{vm.id}/{vm.pingback_uuid}/",
-                my_ip_net=settings.MY_IP4+'/32',
-                my_ip=settings.MY_IP4,
-                my_domain_name=plain_domain_name,
-                player_ip=str(net)),
+            UserData=user_data,
             MaxCount=1, MinCount=1,
             ImageId=ubuntu_ami,
             InstanceType='t2.nano',
@@ -338,6 +394,7 @@ def delete_ooo_vm(vm:VM, raise_exceptions=False) -> Tuple[int,str]:
 
 
 def minimize_egress(vm: VM) -> bool:
+    # TODO: study version
     try:
         ec2 = get_ec2()
         assert vm.security_group_id
