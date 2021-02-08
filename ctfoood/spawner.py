@@ -207,14 +207,14 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2, collect_data:
     data = sg.authorize_ingress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net),
-        ] + get_s3_net_perms() if collect_data else [])
+        ] + (get_s3_net_perms() if collect_data else []))
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
     logging.info("Ingress rules set for %s", sg.id)
 
     data = sg.authorize_egress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net, port=443),
-        ] + get_s3_net_perms() if collect_data else [])
+        ] + (get_s3_net_perms() if collect_data else []))
     logging.info("Egress rules set for %s", sg.id)
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
     return sg
