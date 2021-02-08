@@ -11,8 +11,10 @@ import re
 import string
 import subprocess
 import time
+import urllib.request
 import boto3
-from typing import Tuple, Optional
+from functools import lru_cache
+from typing import Tuple, Optional, List, Dict
 from .models import ChalCheckout, VM
 
 logger = logging.getLogger("OOO")
@@ -160,7 +162,6 @@ def get_boto3_session():
 def get_ec2():
     return get_boto3_session().resource("ec2")
 
-
 # XXX: switched to single IPv4Network for simplicity
 #def make_ip_ranges(nets) -> Dict[str,List[Dict[str,str]]]:
 #    v4 = []; v6 = []
@@ -175,17 +176,25 @@ def get_ec2():
 #            v4.append({'CidrIp': str(n)})
 #    return {'IpRanges': v4, 'Ipv6Ranges': v6}
 
-def make_ip_perms(net:ipaddress.IPv4Network, port:int=0):
+def make_ip_perms(net:ipaddress.IPv4Network, port:int=0) -> Dict:
     return {'FromPort': port if port else 0,
             'ToPort': port if port else 65535,
             'IpProtocol': 'tcp',
             'IpRanges': ({'CidrIp': str(net)},)}
 
+@lru_cache(maxsize=None)  # TODO: cache to file
+def get_s3_net_perms() -> List[Dict]:
+    with urllib.request.urlopen('https://ip-ranges.amazonaws.com/ip-ranges.json') as r:
+        ranges_json = json.load(r)
+    prefixes = ranges_json['prefixes']
+    s3_myregion = [item['ip_prefix'] for item in prefixes if item["service"] == "S3" and item['region'] == settings.AWS_DEFAULT_REGION_STUDY]
+    s3_global = [item['ip_prefix'] for item in prefixes if item["service"] == "S3" and item['region'] == "GLOBAL"]
+    return [ make_ip_perms(p) for p in s3_myregion+s3_global ]
+
 def sg_name(vm: VM):
     return "archiveplayervm%d" % vm.id
 
-def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2):
-    # TODO: study version
+def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2, collect_data: bool = False):
     assert re.match(r'\d+\.\d+\.\d+\.\d+\Z', settings.MY_IP4)
     me_net = ipaddress.IPv4Network(settings.MY_IP4 + "/32")
 
@@ -198,16 +207,15 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2):
     data = sg.authorize_ingress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net),
-        ])
-    logging.info("Ingress rules set for %s: %s", sg.id, data)
+        ] + get_s3_net_perms() if collect_data else [])
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
+    logging.info("Ingress rules set for %s", sg.id)
 
-    # TODO: only if allow_egress? are connections tracked?
     data = sg.authorize_egress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net, port=443),
-        ])
-    logging.info("Egress rules set for %s: %s", sg.id, data)
+        ] + get_s3_net_perms() if collect_data else [])
+    logging.info("Egress rules set for %s", sg.id)
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
     return sg
 
@@ -298,7 +306,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             user_data = USER_DATA_FMT.format(**userdata_params)
 
         _act("Creating the security group...")
-        sg = create_security_group(vm, net, ec2)
+        sg = create_security_group(vm, net, ec2, collect_data=collect_data)
         vm.security_group_id = sg.id
         vm.save()
 
