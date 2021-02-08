@@ -94,7 +94,7 @@ runcmd:
  - adduser runner docker
  - su runner -c "docker load -i /chal.tgz"
  - curl -sSL "{pingback_url}" -d "msg=Starting the container..."
- - su runner -c "docker run -p {checkout.exposed_port}:{checkout.exposed_port} -d --name chal $(docker images -q|head -n1)"
+ - su runner -c "docker run -p {checkout.exposed_port}:{checkout.exposed_port} -d --name chal $(docker images -q --filter=reference='oooa-*'|head -n1)"
  - curl -sSL "{pingback_url}" -d "msg=Finished, activated the final network settings."
  - iptables -D OUTPUT -d "{my_ip_net}" -j ACCEPT
 """
@@ -252,6 +252,8 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     logger.info("Received request to spawn a container for %s", checkout)
     logger.info("Netmask allowed to connect: %s", net)
     logger.info("Study opt-in: %s", collect_data)
+
+    assert checkout.get_imgtag().startswith('oooa-') # See USER_DATA_FMT_STUDY
 
     _progress("Finding the current Ubuntu image ID...")
     ubuntu_ami = find_ubuntu_ami()
