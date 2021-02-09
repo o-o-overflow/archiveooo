@@ -328,7 +328,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             # TODO: set later?
             MetadataOptions={'HttpTokens': 'required'},
             # ClientToken
-            # TagSpecifications=[{'Tags':[{'Key':'archivevm', 'Value':str(vm.id)}]}],
+            TagSpecifications=[{'ResourceType':'instance', 'Tags':[{'Key':'archivevm', 'Value':str(vm.id)}, {'Key':'Name', 'Value':'player_vm_'+str(vm.id)}]}],
         )
         #LaunchTemplate={'LaunchTemplateName': 'archive_default'},
         # XXX: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Run_Instance_Idempotency.html
