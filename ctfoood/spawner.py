@@ -318,7 +318,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             UserData=user_data,
             MaxCount=1, MinCount=1,
             ImageId=ubuntu_ami,
-            InstanceType='t2.nano',
+            InstanceType='t2.medium' if collect_data else 't2.nano',
 
             KeyName='for_archive_player_vms',
             Monitoring={'Enabled':False},
