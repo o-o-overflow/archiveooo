@@ -116,9 +116,10 @@ def homepage(request):
         return 0 if 'welcoming' in s else \
                 1 if 'good_first_challenge' in s else \
                 2 if 'intro' in s else 3
-    own_private_chals = Chal.objects.filter(owner_user__id=request.user.id, public_checkout=None)
+    own_private_chals = Chal.objects.filter(owner_user__id=request.user.id, public_checkout=None)\
+            .order_by('-id')
     grp_private_chals = Chal.objects.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
-            .exclude(owner_user__id=request.user.id)
+            .exclude(owner_user__id=request.user.id).order_by('-id')
     if request.user.is_authenticated:
         # Also see the profile page
         us = get_settings(request.user)
