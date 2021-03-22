@@ -30,6 +30,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--max-age", metavar='MINUTES', type=int, default=30, help="Default: 30 (minutes)")
+    parser.add_argument("--study-max-age", metavar='MINUTES', type=int, default=55, help="Default: 55 (minutes)")
     parser.add_argument("--log-level", metavar='LEVEL', default="DEBUG", help="Default: DEBUG")
 
     args = parser.parse_args()
@@ -39,6 +40,7 @@ def main():
 
     now = django.utils.timezone.now()
     max_dt = datetime.timedelta(minutes=args.max_age)
+    study_max_dt = datetime.timedelta(minutes=args.study_max_age)
 
 
     # TODO: Also enumerate in Amazon, using separate credentials
@@ -46,7 +48,7 @@ def main():
 
     for vm in VM.objects.filter(deleted=False).all():
         dt = now - vm.creation_time
-        if dt < max_dt:
+        if dt < (study_max_dt if vm.study_opted_in else max_dt):
             logger.debug("Leaving young VM %s alone (age: %s)", vm, dt)
             continue
         logger.debug("Deleting VM %s (age: %s)", vm, dt)

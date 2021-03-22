@@ -59,7 +59,7 @@ runcmd:
 USER_DATA_FMT_STUDY="""
 #cloud-config
 runcmd:
- - [ sh, -c, "echo poweroff | at now + 40 minutes" ]
+ - [ sh, -c, "echo poweroff | at now + 50 minutes" ]
  - [ sh, -c, "date > /tmp/userdata_ran_at" ]
  - mkdir /root/.ssh
  - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo precisa ed2' > /root/.ssh/authorized_keys" ]
