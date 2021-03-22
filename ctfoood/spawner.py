@@ -31,9 +31,8 @@ packages:
 runcmd:
  - [ sh, -c, "echo poweroff | at now + 25 minutes" ]
  - [ sh, -c, "date > /tmp/userdata_ran_at" ]
- - mkdir /root/.ssh
- - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo precisa ed2' > /root/.ssh/authorized_keys" ]
- - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFfCTUJHvZeiPHp78ZrtT0T4KTLY5md3z0oebMrkJOjO chromebook_postcina' >> /root/.ssh/authorized_keys" ]
+ - mkdir -p /root/.ssh
+ - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo' > /root/.ssh/authorized_keys" ]
  - [ sh, -c, "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKzeW2s7ABiFuuRxM98F4AV+e9it2g/7qWZ2bG3R0iwPft8vaifSMZC+YfWlLtRq1Jvsabab6SjaklNcrT8gDGSOkkLv1rGqG/yo6MP9AJY5CfYyMypUN5tq3XTU8EffkxD4RRHCIRhnZeoe0HOKzxmWd9ERUSHZpskFKAY5rdWqLTGSDqXXkci5mvmHoymvx00dkLZEaL1/niFtsKFaCwEsP0vmikxBgnf2ILrcx8QGfP4KbiIBZ84KUG8JH4uGPI55wxtpQ+0eAexXlbKVMMYKt19aOTZ/ytRr5dwS3SCf6qCUXLpD60PqjYkl9lrTB4L8/E443uv18a9vfbW8W1 purv' >> /root/.ssh/authorized_keys" ]
  - curl -sSL "{pingback_url}" -d "msg=Downloading the container..."
  - curl -sSL "{checkout.docker_image_tgzurl}" > /chal.tgz
@@ -60,19 +59,19 @@ USER_DATA_FMT_STUDY="""
 #cloud-config
 runcmd:
  - [ sh, -c, "echo poweroff | at now + 50 minutes" ]
- - [ sh, -c, "date > /tmp/userdata_ran_at" ]
- - mkdir /root/.ssh
- - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo precisa ed2' > /root/.ssh/authorized_keys" ]
- - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFfCTUJHvZeiPHp78ZrtT0T4KTLY5md3z0oebMrkJOjO chromebook_postcina' >> /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "date | tee /tmp/userdata_ran_at__study_version" ]
+ - echo "study version"
+ - mkdir -p /root/.ssh
+ - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo' > /root/.ssh/authorized_keys" ]
  - [ sh, -c, "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKzeW2s7ABiFuuRxM98F4AV+e9it2g/7qWZ2bG3R0iwPft8vaifSMZC+YfWlLtRq1Jvsabab6SjaklNcrT8gDGSOkkLv1rGqG/yo6MP9AJY5CfYyMypUN5tq3XTU8EffkxD4RRHCIRhnZeoe0HOKzxmWd9ERUSHZpskFKAY5rdWqLTGSDqXXkci5mvmHoymvx00dkLZEaL1/niFtsKFaCwEsP0vmikxBgnf2ILrcx8QGfP4KbiIBZ84KUG8JH4uGPI55wxtpQ+0eAexXlbKVMMYKt19aOTZ/ytRr5dwS3SCf6qCUXLpD60PqjYkl9lrTB4L8/E443uv18a9vfbW8W1 purv' >> /root/.ssh/authorized_keys" ]
  - curl -sSL "{pingback_url}" -d "msg=Downloading the container..."
  - curl -sSL "{checkout.docker_image_tgzurl}" > /chal.tgz
  - curl -sSL "{pingback_url}" -d "msg=Setting up the study system..."
  - tcpdump port {checkout.exposed_port} -C 15 -U -w /tmp/study_data.pcap &
  - docker run -d --privileged --name sf-collector -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /mnt/data:/mnt/data -e INTERVAL=60 -e EXPORTER_ID=${{1337}} -e OUTPUT=/mnt/data/ -e FILTER="container.name!=sf-collector and container.name!=sf-exporter and container.type!=host" --rm sysflowtelemetry/sf-collector
-  - echo "iptables -F DOCKER && iptables -P INPUT DROP && iptables -I INPUT -p tcp --dport 22 -j ACCEPT" | at now + 25 minutes
- - echo "aws configure set aws_access_key_id {aws_access_key_id_study} && aws configure set aws_secret_access_key {aws_secret_access_key_study} && aws configure set region {aws_default_region_study}" | at now + 25 minutes
- - echo "tar -cvf /tmp/network_capture_{epoch_time}_{rand_str}.tar /tmp/study_data.pcap* && tar -cvf /tmp/sysflow_capture_{epoch_time}_{rand_str}.tar /mnt/data/* && aws s3 cp /tmp/network_capture*.tar s3://{s3_bucket_study}/network_data && aws s3 cp /tmp/sysflow_capture*.tar s3://{s3_bucket_study}/sysflow_data" | at now + 26 minutes
+ - echo 'iptables -F DOCKER && iptables -P INPUT DROP && iptables -I INPUT -p tcp --dport 22 -j ACCEPT' | at now + 25 minutes
+ - echo 'aws configure set aws_access_key_id {aws_access_key_id_study} && aws configure set aws_secret_access_key {aws_secret_access_key_study} && aws configure set region {aws_default_region_study}' | at now + 25 minutes
+ - echo 'touch /tmp/study_tar_starts && tar -cvf /tmp/network_capture_{epoch_time}_{rand_str}.tar /tmp/study_data.pcap* && tar -cvf /tmp/sysflow_capture_{epoch_time}_{rand_str}.tar /mnt/data/* && touch /tmp/study_upload_starts && aws s3 cp --no-progress /tmp/network_capture*.tar s3://{s3_bucket_study}/network_data && touch /tmp/study_pcaps_successfully_uploaded && aws s3 cp --no-progress /tmp/sysflow_capture*.tar s3://{s3_bucket_study}/sysflow_data && touch /tmp/study_sysflow_data_successfully_uploaded' | at now + 26 minutes
  - curl -sSL "{pingback_url}" -d "msg=Setting up the network..."
  - [ bash, -c, "echo {my_ip} {my_domain_name} >> /etc/hosts" ]
  - iptables -A OUTPUT -m state --state ESTABLISHED -j ACCEPT
