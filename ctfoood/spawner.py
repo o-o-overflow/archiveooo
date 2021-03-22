@@ -170,14 +170,15 @@ def find_study_ami(ec2) -> str:
 
 
 def get_boto3_session(profile:Optional[str]=None):
-    # TODO: should it have its own credentials?
-    p = profile if profile else settings.AWS_PROFILE
     avail = boto3.Session().available_profiles
-    session = boto3.Session(profile_name=p if (p in avail) else None,
-            region_name='us-west-2',
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-    return session
+    p = profile if profile else settings.AWS_PROFILE
+    if p in avail:
+        return boto3.Session(profile_name=p, region_name='us-west-2')
+    else:
+        assert profile is None
+        return boto3.Session(region_name='us-west-2',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 
 def get_ec2(profile:Optional[str]=None):
     return get_boto3_session(profile=profile).resource("ec2")

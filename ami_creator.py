@@ -63,11 +63,11 @@ def create_ami(instance):
     image_name = "archiveooo_study_ami_" + creation_time
     image = instance.create_image(Name=image_name)
     image.wait_until_exists()
-    image.create_tags(Tags=[{'Key': 'creation_time', 'Value': creation_time},
-        {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
     logger.debug("Waiting for the image (%s) to become available...", image.id)
     while get_ami_status(image) != "available":
         time.sleep(60)
+    image.create_tags(Tags=[{'Key': 'creation_time', 'Value': creation_time},
+        {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
 
 def terminate_instance(instance):
     instance.terminate()
@@ -86,6 +86,10 @@ def delete_old_amis():
 
 
 if __name__ == "__main__":
+    MY_LOCK_FILE = '/run/lock/ami_creator_active.lock'
+    with open(MY_LOCK_FILE, 'x') as lf:
+        lf.write("Started at: {}\nPID: {}\nPPID: {}\n".format(time.asctime(), os.getpid(), os.getppid()))
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'archiveooo.settings')
     import django
     django.setup()
@@ -95,11 +99,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--log-level", metavar='LEVEL', default="DEBUG", help="Default: DEBUG")
+    parser.add_argument("--from-this-stopped-instance", metavar='INSTANCE_ID')
     args = parser.parse_args()
     if args.log_level:
         logger.setLevel(args.log_level)
 
-    instance = spawn_ec2_with_sysflow()
+    if args.from_this_stopped_instance:
+        instance = ec2.Instance(id=args.from_this_stopped_instance)
+    else:
+        instance = spawn_ec2_with_sysflow()
     create_ami(instance)
     terminate_instance(instance)
     delete_old_amis()
+
+    os.unlink(MY_LOCK_FILE)
