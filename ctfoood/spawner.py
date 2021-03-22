@@ -69,7 +69,7 @@ runcmd:
  - curl -sSL "{pingback_url}" -d "msg=Setting up the study system..."
  - tcpdump port {checkout.exposed_port} -C 15 -U -w /tmp/study_data.pcap &
  - docker run -d --privileged --name sf-collector -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /mnt/data:/mnt/data -e INTERVAL=60 -e EXPORTER_ID=${{1337}} -e OUTPUT=/mnt/data/ -e FILTER="container.name!=sf-collector and container.name!=sf-exporter and container.type!=host" --rm sysflowtelemetry/sf-collector
- - echo 'iptables -F DOCKER && iptables -P INPUT DROP && iptables -I INPUT -p tcp --dport 22 -j ACCEPT' | at now + 25 minutes
+ - echo 'iptables -I OUTPUT -d "{player_ip}" -j DROP && iptables -I INPUT -d "{player_ip}" -j DROP && iptables -P FORWARD DROP && iptables -F DOCKER && iptables -F FORWARD' | at now + 25 minutes
  - echo 'aws configure set aws_access_key_id {aws_access_key_id_study} && aws configure set aws_secret_access_key {aws_secret_access_key_study} && aws configure set region {aws_default_region_study}' | at now + 25 minutes
  - echo 'touch /tmp/study_tar_starts && tar -cvf /tmp/network_capture_{epoch_time}_{rand_str}.tar /tmp/study_data.pcap* && tar -cvf /tmp/sysflow_capture_{epoch_time}_{rand_str}.tar /mnt/data/* && touch /tmp/study_upload_starts && aws s3 cp --no-progress /tmp/network_capture*.tar s3://{s3_bucket_study}/network_data/ && touch /tmp/study_pcaps_successfully_uploaded && aws s3 cp --no-progress /tmp/sysflow_capture*.tar s3://{s3_bucket_study}/sysflow_data/ && touch /tmp/study_sysflow_data_successfully_uploaded' | at now + 26 minutes
  - curl -sSL "{pingback_url}" -d "msg=Setting up the network..."
