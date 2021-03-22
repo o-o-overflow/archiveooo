@@ -216,22 +216,22 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2, collect_data:
 
     sg = ec2.create_security_group(GroupName=sg_name(vm),
             Description="sg for archive.ooo player VM %s" % vm)
-    logging.info("Created security group %s", sg.id)
+    logger.info("Created security group %s", sg.id)
 
-    logging.warn("Leaving the default egress rule as-is")
+    logger.warn("Leaving the default egress rule as-is")
 
     data = sg.authorize_ingress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net),
         ] + (get_s3_net_perms() if collect_data else []))
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
-    logging.info("Ingress rules set for %s", sg.id)
+    logger.info("Ingress rules set for %s", sg.id)
 
     data = sg.authorize_egress(IpPermissions=[
         make_ip_perms(net),
         make_ip_perms(me_net, port=443),
         ] + (get_s3_net_perms() if collect_data else []))
-    logging.info("Egress rules set for %s", sg.id)
+    logger.info("Egress rules set for %s", sg.id)
     assert data['ResponseMetadata']['HTTPStatusCode'] == 200
     return sg
 
@@ -434,7 +434,7 @@ def minimize_egress(vm: VM) -> bool:
             make_ip_perms(me_net),
         ])
 
-        logging.info("Non-player egress rules removed for %s", sg.id)
+        logger.info("Non-player egress rules removed for %s", sg.id)
         assert data['ResponseMetadata']['HTTPStatusCode'] == 200
         return True
     except:
@@ -448,13 +448,13 @@ def disable_metadata_access(vm: VM) -> bool:
     # Note that we can't disable it on instance creation, since that's how
     # the keys and user-data are set up by cloud-init.
     try:
-        logging.debug("Disabling of the metadata HTTP endpoint...")
+        logger.debug("Disabling of the metadata HTTP endpoint...")
         ec2_client = get_boto3_session().client('ec2')
         resp = ec2_client.modify_instance_metadata_options(
                 InstanceId=vm.instance_id,
                 HttpEndpoint='disabled')
         assert resp['InstanceMetadataOptions']['HttpEndpoint'] == 'disabled'
-        logging.info("Requested disabling of the metadata HTTP endpoint")
+        logger.info("Requested disabling of the metadata HTTP endpoint")
         return True
     except:
         logger.exception("disable_metadata_access failed")
