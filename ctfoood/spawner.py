@@ -217,7 +217,7 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2, collect_data:
             Description="sg for archive.ooo player VM %s" % vm)
     logger.info("Created security group %s", sg.id)
 
-    logger.warn("Leaving the default egress rule as-is")
+    logger.info("Leaving the default egress rule as-is") # XXX: worth changing?
 
     data = sg.authorize_ingress(IpPermissions=[
         make_ip_perms(net),
