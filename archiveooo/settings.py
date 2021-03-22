@@ -20,6 +20,7 @@ MY_IP4 = subprocess.check_output('dig -4 +short @8.8.8.8 "$(hostname --fqdn)"',
 S3_BUCKET = None
 
 # Used both to spawn VMs and to access S3
+AWS_PROFILE = None
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
 

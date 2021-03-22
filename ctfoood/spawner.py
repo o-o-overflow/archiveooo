@@ -149,9 +149,9 @@ def find_ubuntu_ami():
     return ami['id']
 
 
-def get_boto3_session():
+def get_boto3_session(profile:Optional[str]=None):
     # TODO: should it have its own credentials?
-    p = settings.AWS_PROFILE
+    p = profile if profile else settings.AWS_PROFILE
     avail = boto3.Session().available_profiles
     session = boto3.Session(profile_name=p if (p in avail) else None,
             region_name='us-west-2',
@@ -159,8 +159,8 @@ def get_boto3_session():
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
     return session
 
-def get_ec2():
-    return get_boto3_session().resource("ec2")
+def get_ec2(profile:Optional[str]=None):
+    return get_boto3_session(profile=profile).resource("ec2")
 
 # XXX: switched to single IPv4Network for simplicity
 #def make_ip_ranges(nets) -> Dict[str,List[Dict[str,str]]]:
