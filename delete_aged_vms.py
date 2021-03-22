@@ -48,15 +48,16 @@ def main():
 
     for vm in VM.objects.filter(deleted=False).all():
         dt = now - vm.creation_time
+        desc = "study " if vm.study_opted_in else ""
         if dt < (study_max_dt if vm.study_opted_in else max_dt):
-            logger.debug("Leaving young VM %s alone (age: %s)", vm, dt)
+            logger.debug("Leaving young %sVM %s alone (age: %s)", desc, vm, dt)
             continue
-        logger.debug("Deleting VM %s (age: %s)", vm, dt)
+        logger.debug("Deleting %sVM %s (age: %s)", desc, vm, dt)
         errcode, output = delete_ooo_vm(vm)
         if errcode == 0:
-            logger.debug("Successfully deleted %s", vm)
+            logger.debug("Successfully deleted %s%s", desc, vm)
         else:
-            logger.error("Error during deletion of %s: %s", vm, output)
+            logger.error("Error during deletion of %s%s: %s", desc, vm, output)
 
 
 if __name__ == "__main__":
