@@ -73,28 +73,13 @@ def terminate_instance(instance):
     instance.terminate()
     instance.wait_until_terminated()
 
-def get_my_amis():
-    return ec2.images.filter(Owners=['self'],
-        Filters=[{'Name':'tag-key','Values':['study_ami_autogen']}])
-
 def delete_old_amis():
-    # find the latest study ami
-    latest_time = 0
-    latest_image = None
-    my_images = get_my_amis()
-    for image in my_images:
-        if image.tags == None:
-            continue
-        for tag in image.tags:
-            if tag['Key'] == 'creation_time':
-                if latest_time < int(tag['Value']):
-                    latest_time = int(tag['Value'])
-                    latest_image = image
     # delete all amis except latest one
-    logger.debug("Deleting all images except for the latest (%s)", latest_image.id)
-    assert latest_image
-    for image in my_images:
-        if image.id != latest_image.id:
+    latest_image_id = find_study_ami(ec2)
+    logger.debug("Deleting all images except for the latest (%s)", latest_image_id)
+    assert latest_image_id
+    for image in get_study_amis(ec2):
+        if image.id != latest_image_id:
             logger.debug("Deleting old auto-generated AMI %s", image.id)
             image.deregister()
 
@@ -105,7 +90,7 @@ if __name__ == "__main__":
     import django
     django.setup()
 
-    from ctfoood.spawner import get_ec2, find_ubuntu_ami
+    from ctfoood.spawner import get_ec2, find_ubuntu_ami, find_study_ami, get_study_amis
     ec2 = get_ec2(profile='archiveooo_ami_creator')
 
     parser = argparse.ArgumentParser()

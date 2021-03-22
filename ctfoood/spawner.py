@@ -100,7 +100,7 @@ runcmd:
 """
 
 
-def find_ubuntu_ami():
+def find_ubuntu_ami() -> str:
     PRODUCT = 'com.ubuntu.cloud.daily:server:20.04:amd64'
     DAILY_JSON_URL = 'https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json'
     if os.getenv('XDG_RUNTIME_DIR'):
@@ -147,6 +147,26 @@ def find_ubuntu_ami():
     assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
     ami = matching[0]
     return ami['id']
+
+def get_study_amis(ec2):
+    return ec2.images.filter(Owners=['self'],
+        Filters=[{'Name':'tag-key','Values':['study_ami_autogen']}])
+
+def find_study_ami(ec2) -> str:
+    # find the latest study ami
+    latest_time = 0
+    latest_image = None
+    my_images = get_study_amis(ec2)
+    for image in my_images:
+        if image.tags == None:
+            continue
+        for tag in image.tags:
+            if tag['Key'] == 'creation_time':
+                if latest_time < int(tag['Value']):
+                    latest_time = int(tag['Value'])
+                    latest_image = image
+    assert latest_image
+    return latest_image.id
 
 
 def get_boto3_session(profile:Optional[str]=None):
@@ -256,7 +276,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     assert checkout.get_imgtag().startswith('oooa-') # See USER_DATA_FMT_STUDY
 
     _progress("Finding the current Ubuntu image ID...")
-    ubuntu_ami = find_ubuntu_ami()
+    ami_id:str = find_study_ami(ec2) if collect_data else find_ubuntu_ami()
 
     if collect_data:
         creation_time = str(int(time.time()))
@@ -317,7 +337,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             SecurityGroupIds=[sg.id],
             UserData=user_data,
             MaxCount=1, MinCount=1,
-            ImageId=ubuntu_ami,
+            ImageId=ami_id,
             InstanceType='t2.medium' if collect_data else 't2.nano',
 
             KeyName='for_archive_player_vms',
