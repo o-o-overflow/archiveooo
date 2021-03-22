@@ -5,6 +5,7 @@ UserData="""
 repo_update: true
 packages:
  - docker.io
+ - awscli
 runcmd:
  - [ sh, -c, "echo poweroff | at now + 25 minutes" ]
  - docker run -d --privileged --name sf-collector -v /var/run/docker.sock:/host/var/run/docker.sock -v /dev:/host/dev -v /proc:/host/proc:ro -v /boot:/host/boot:ro -v /lib/modules:/host/lib/modules:ro -v /usr:/host/usr:ro -v /mnt/data:/mnt/data -e INTERVAL=60 -e EXPORTER_ID=${1337} -e OUTPUT=/mnt/data/ -e FILTER="container.name!=sf-collector and container.name!=sf-exporter" --rm sysflowtelemetry/sf-collector
