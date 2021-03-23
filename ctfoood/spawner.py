@@ -276,18 +276,14 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     if collect_data:
         creation_time = str(int(time.time()))
         study_data_id = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(32))
-        data = []
         study_metadata_file = f'{creation_time}_{study_data_id}.json'
         study_metadata_path = os.path.join(settings.STUDY_METADATA_PATH, study_metadata_file)  # TODO: can we just mkdtemp?
         logger.debug("Writing the study metadata json file (%s)...", study_metadata_path)
-        with open(study_metadata_path, 'wb') as f:
-            f.write(b'[]') # XXX: why?
         network_data = f'network_capture_{creation_time}_{study_data_id}.tar'
         sysflow_data = f'sysflow_capture_{creation_time}_{study_data_id}.tar'
         data_obj = {'challenge_name': checkout.chal.name, 'challenge_checkout_id': checkout.id,'network_data': network_data, 'sysflow_data': sysflow_data}
-        data.append(data_obj)  # XXX: why?
         with open(study_metadata_path, 'w') as f:
-            json.dump(data, f)
+            json.dump(data_obj, f)
         logger.info("Study metadata written to '%s', uploading to s3...", study_metadata_path)
         get_boto3_session().client('s3').upload_file(study_metadata_path, settings.S3_BUCKET_STUDY, study_metadata_file)
 
