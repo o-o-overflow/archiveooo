@@ -331,6 +331,9 @@ def spawn_vm_on_ooo(request, checkoutid):
 @login_required
 def delete_vm(request, vmid):
     vm = get_object_or_404(VM, id=vmid, creation_user=request.user)
+    if vm.study_opted_in and not request.user.is_staff:
+        # Would bypass uploading data
+        raise PermissionDenied
     errcode, output = delete_ooo_vm(vm)
     return render(request, 'ctfoood/pgm_output.html',
             { "errcode": errcode, "output": output, "action": "delete_vm", })

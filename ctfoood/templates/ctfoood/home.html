@@ -34,7 +34,7 @@ This is a live, playable archive of DEF CON CTF challenges.
         <li>{{ vm.ip }}:{{ vm.checkout.exposed_port }}
             for <a href="{{vm.checkout.get_absolute_url}}">{{ vm.checkout.chal.name }}</a>
             <span style="color: #888;">[ {{ vm.creation_time|naturaltime }} | id={{vm.id}}
-                | <input type="submit" value="delete" onclick="delete_vm_click(event);">
+                {% if not vm.study_opted_in %}| <input type="submit" value="delete" onclick="delete_vm_click(event);">{% endif %}
                 ]<br>{{ vm.latest_user_message }}</span>
             {% if user.is_staff %}[ <a href="{% url "run_test_deployed" vm.id %}" target="_blank">Run tester</a> ]{% endif %}
         </li></form>
