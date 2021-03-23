@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.core.validators import EmailValidator
-from django.views.decorators.http import require_POST, require_safe
+from django.views.decorators.http import require_POST, require_safe   # TODO: useful to require_http_methods(["GET", "HEAD", "POST"])?
 from django.views.decorators.vary import vary_on_cookie
 from django.views.decorators.cache import cache_control, never_cache, patch_cache_control
 from django.views.decorators.csrf import csrf_exempt
@@ -450,11 +450,19 @@ def run_test_deployed(request, vmid):
     if not chal.has_private_access(request.user):
         vm = get_object_or_404(VM, id=vmid, creation_user=request.user)
         assert False
-    errcode, output = test_deployed(vm, user=request.user)
+    just_healthcheck = bool(request.GET.get('just_healthcheck'))
+    log_level = request.GET.get('log_level', default='WARNING').upper()
+    if (log_level != 'WARNING') and not request.user.is_staff:
+        raise PermissionDenied
+    if not isinstance(logging.getLevelName(log_level),int):
+        return HttpResponseBadRequest("log_level?")
+    errcode, output = test_deployed(vm, user=request.user,
+            just_healthcheck=just_healthcheck, log_level=log_level)
     return render(request, 'ctfoood/pgm_output.html',
             { "result": checkout, "result_meta": checkout._meta if checkout else None,
                 "errcode": errcode, "output": output,
-                "action": "test_deployed", "chal": chal, "chal_meta": chal._meta, },
+                "action": "test_deployed (just_healthcheck={}, log_level={})".format(just_healthcheck, log_level),
+                "chal": chal, "chal_meta": chal._meta, },
             status=500 if errcode else 200)
 
 
