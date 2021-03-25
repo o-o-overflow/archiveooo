@@ -336,6 +336,13 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             Monitoring={'Enabled':False},
             InstanceInitiatedShutdownBehavior='terminate',
 
+            #Increase EBS storage
+            BlockDeviceMappings=[
+            {
+                'DeviceName': '/dev/sda1',
+                'Ebs': {
+                    'VolumeSize': 16,
+            }}],
             # CANNOT USE (won't have the keypair): MetadataOptions={'HttpEndpoint': 'disabled'},
             # TODO: set later?
             MetadataOptions={'HttpTokens': 'required'},
