@@ -71,14 +71,12 @@ Your group's private challenges:
 
 {# XXX: Also see the user-profile view and template #}
 
-<h1 style="margin-bottom: 0.2em;">Available challenges
+<h1 style="margin-bottom: 0.2em;">Start here!
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
-
-
-{% if public_chals %}
+{% if public_chals_goodfirst %}
 <span class="homelist">
-{% for c in public_chals %}
+{% for c in public_chals_goodfirst %}
     <div class="homechal">
         <span class="format">{{ c.format }}</span><br>
         <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
@@ -92,9 +90,49 @@ Your group's private challenges:
     </div>
 {% endfor %}
 </span>
-{% else %}
-There are no public challenges yet. Come back soon!
 {% endif %}
+<h1 style="margin-bottom: 0.2em;">Easy but... can you hack fast?
+    {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
+</h1>
+{% if public_chals_speedruns %}
+<span class="homelist">
+{% for c in public_chals_speedruns %}
+    <div class="homechal">
+        <span class="format">{{ c.format }}</span><br>
+        <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+        {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
+        <br>
+        <div class="tags hometags">
+        {% for t in c.get_tags %}
+            <span class="tag">{{ t }}</span>
+        {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+{% if public_chals_other %}
+<h1 style="margin-bottom: 0.2em;">Harder challenges  <!-- Ub3rL33t haxorz chals -->
+    {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
+</h1>
+<span class="homelist">
+{% for c in public_chals_other %}
+    <div class="homechal">
+        <span class="format">{{ c.format }}</span><br>
+        <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
+        {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
+        <br>
+        <div class="tags hometags">
+        {% for t in c.get_tags %}
+            <span class="tag">{{ t }}</span>
+        {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+</span>
+{% endif %}
+
+<!-- There are no (other) public challenges yet. Come back soon! -->
 
 
 {% if user.is_authenticated %}

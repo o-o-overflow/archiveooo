@@ -5,7 +5,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.validators import EmailValidator
 from django.views.decorators.http import require_POST, require_safe   # TODO: useful to require_http_methods(["GET", "HEAD", "POST"])?
 from django.views.decorators.vary import vary_on_cookie
-from django.views.decorators.cache import cache_control, never_cache, patch_cache_control
+from django.views.decorators.cache import never_cache, patch_cache_control
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -111,11 +111,6 @@ def add_recaptcha_sitekey(ctx):
 @require_safe
 @vary_on_cookie
 def homepage(request):
-    def tagorder(c: Chal):
-        s = c.tags_str()
-        return 0 if 'welcoming' in s else \
-                1 if 'good_first_challenge' in s else \
-                2 if 'intro' in s else 3
     own_private_chals = Chal.objects.filter(owner_user__id=request.user.id, public_checkout=None)\
             .order_by('-id')
     grp_private_chals = Chal.objects.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
@@ -123,14 +118,8 @@ def homepage(request):
     if request.user.is_authenticated:
         # Also see the profile page
         us = get_settings(request.user)
-
         public_chals = list(Chal.objects.filter(public_checkout__isnull=False)\
                 .exclude(solved_by=us).order_by('points', '-format', 'name'))
-        # First push zero-points to the end
-        public_chals.sort(key=lambda c: 1 if (c.points == 0) else 0)
-        # Reorder: welcoming, good_first_challenge, intro
-        public_chals.sort(key=tagorder)
-
         solved_chals = Chal.objects.filter(public_checkout__isnull=False,
                 solved_by=us).order_by('-points', '-format', 'name')
         own_achievements = us.achievements.all()
@@ -139,18 +128,30 @@ def homepage(request):
     else:
         public_chals = list(Chal.objects.filter(public_checkout__isnull=False)\
                 .order_by('points', '-format', 'name'))
-        # First push zero-points to the end
-        public_chals.sort(key=lambda c: 1 if (c.points == 0) else 0)
-        # Reorder: welcoming, good_first_challenge, intro
-        public_chals.sort(key=tagorder)
         solved_chals = []
         own_achievements = []
         other_achievements = Achievement.objects.all()
         own_vms = []
+
+    # From the existing order (ponints, format, name) -> push zero-points to the end -> welcomes first
+    def tagorder(c: Chal):
+        s = c.tags_str()
+        return 0 if 'welcoming' in s else \
+                1 if 'good_first_challenge' in s else \
+                2 if 'intro' in s else \
+                3 if 'speedrun' in s else 4
+    public_chals.sort(key=lambda c: 1 if (c.points == 0) else 0)
+    public_chals.sort(key=tagorder)
+    # Extract some categories for the homepage (XXX: would be better to do it in the template?)
+    public_chals_goodfirst = [ c for c in public_chals if tagorder(c) in (0,1,2) ]
+    public_chals_speedruns = [ c for c in public_chals if tagorder(c) == 3 ]
+    public_chals_other     = [ c for c in public_chals if tagorder(c) > 3 ]
     response = render(request, 'ctfoood/home.html', {
         "own_private_chals": own_private_chals,
         "grp_private_chals": grp_private_chals,
-        "public_chals": public_chals,
+        "public_chals_goodfirst": public_chals_goodfirst,
+        "public_chals_speedruns": public_chals_speedruns,
+        "public_chals_other": public_chals_other,
         "solved_chals": solved_chals,
         "own_achievements": own_achievements,
         "other_achievements": other_achievements,

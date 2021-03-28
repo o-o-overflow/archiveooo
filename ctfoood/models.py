@@ -377,7 +377,9 @@ class VM(models.Model):
 
     # TODO: liveness check?
     def __str__(self):
-        return f"{self.ip}:{self.checkout.exposed_port} for {self.checkout.chal}, id {self.id}"
+        if self.checkout:
+            return f"{self.ip}:{self.checkout.exposed_port} for {self.checkout.chal}, id {self.id}"
+        return f"{self.ip} UNKNOWN CHECKOUT, id {self.id}"
     class Meta:
         verbose_name = "VM"
 
