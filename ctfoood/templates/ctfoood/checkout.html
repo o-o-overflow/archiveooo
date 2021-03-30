@@ -221,12 +221,14 @@
         <label for="i_will_be_good">I understand that there are no guarantees, and I promise I'll be good.</label>
         <p>
 
+        {% if study_enabled %}
         <p><input type="checkbox" id="i_am_opting_in_for_data_collection" name="i_am_opting_in_for_data_collection">
         <label for="i_am_opting_in_for_data_collection">
         Opt-in to data collection for cybersecurity research that is funded by the Department of Defense.
         <p>If you opt-in to data collection, then your activities, including packets you crafted and sent to server(s), and duration of your activities against a specific host, will be collected. You have the right to stop participation at any time by stopping to interact with the vulnerable system. Once your session is over, all IP addresses will be removed from the network traffic, and all data will be investigated for PII before being released to the public.
         <br><a id="link_to_more_info" href="https://sefcom.asu.edu/archiveooo_study">Additional information regarding this study is available by clicking this link</a>.</label>
         <p>
+	{% endif %}
 
 	{% if recaptcha_sitekey %}
 	  <script src="https://www.google.com/recaptcha/api.js"></script>

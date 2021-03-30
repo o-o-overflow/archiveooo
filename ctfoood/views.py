@@ -224,6 +224,7 @@ def checkoutpage(request, chalname, checkoutid):
         "main_description": main_description, "extra_description": extra_description,
         "special": special, "chal_type_description": chal_type_description,
         "private": private, "this_is_the_public_checkout": this_is_the_public_checkout,
+        "study_enabled": settings.S3_BUCKET_STUDY is not None,
         "got_valid_flag": got_valid_flag, }
     if request.user.is_authenticated:
         ctx.update({
@@ -302,6 +303,8 @@ def spawn_vm_on_ooo(request, checkoutid):
         raise PermissionDenied
 
     collect_data = (request.POST.get('i_am_opting_in_for_data_collection', default='') == 'true')
+    if collect_data:
+        assert settings.S3_BUCKET_STUDY
 
     ip_str = request.POST.get('ooo_allowed_ip')
     if not ip_str:

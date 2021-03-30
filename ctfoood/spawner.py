@@ -274,6 +274,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     ami_id:str = find_study_ami(ec2) if collect_data else find_ubuntu_ami()
 
     if collect_data:
+        assert settings.S3_BUCKET_STUDY
         creation_time = str(int(time.time()))
         study_data_id = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(32))
         study_metadata_file = f'{creation_time}_{study_data_id}.json'
