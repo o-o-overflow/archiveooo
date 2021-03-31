@@ -344,6 +344,9 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             violates_flag_format = True
 
         chaltype = y.get('type', 'normal')
+        if chaltype == "jeopardy":
+            assert chal.format.endswith('q')
+            chaltype = 'normal'
         if chal.type != chaltype:
             logging.warning("Adjusting challenge type: %s -> %s", chal.type, chaltype)
             all_output += "Adjusting challenge type: %s -> %s" % (chal.type, chaltype)
