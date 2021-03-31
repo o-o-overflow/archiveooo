@@ -97,9 +97,9 @@ if not "DATABASES" in vars():
 #
 # They are similar in concept to Django's media/upload dir
 PUBLIC_FILES_ROOT = BASE_DIR + '/public_files/'
-PUBLIC_FILES_URL = '/public_files/'
+PUBLIC_FILES_URL = 'https://'+MY_DOMAIN_NAME+'/public_files/'
 IMAGES_DOWNLOAD_ROOT = BASE_DIR + '/dockerimg/'   # docker save
-IMAGES_DOWNLOAD_URL = '/dockerimg/'
+IMAGES_DOWNLOAD_URL = 'https://'+MY_DOMAIN_NAME+'/dockerimg/'
 if os.getenv("DJANGO_S3_BUCKET"):
     S3_BUCKET = os.getenv("DJANGO_S3_BUCKET")
 
