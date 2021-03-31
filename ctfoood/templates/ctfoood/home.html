@@ -71,10 +71,10 @@ Your group's private challenges:
 
 {# XXX: Also see the user-profile view and template #}
 
+{% if public_chals_goodfirst %}
 <h1 style="margin-bottom: 0.2em;">Start here!
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
-{% if public_chals_goodfirst %}
 <span class="homelist">
 {% for c in public_chals_goodfirst %}
     <div class="homechal">
@@ -91,10 +91,10 @@ Your group's private challenges:
 {% endfor %}
 </span>
 {% endif %}
+{% if public_chals_speedruns %}
 <h1 style="margin-bottom: 0.2em;">Easy but... can you hack fast?
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
-{% if public_chals_speedruns %}
 <span class="homelist">
 {% for c in public_chals_speedruns %}
     <div class="homechal">
@@ -132,7 +132,13 @@ Your group's private challenges:
 </span>
 {% endif %}
 
-<!-- There are no (other) public challenges yet. Come back soon! -->
+{% if public_chals_goodfirst or public_chals_speedruns or public_chals_other %}
+{% else %}
+<h1 style="margin-bottom: 0.2em;">No public challenges yet
+    {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
+</h1>
+There are no public challenges yet. Come back soon!
+{% endif %}
 
 
 {% if user.is_authenticated %}
