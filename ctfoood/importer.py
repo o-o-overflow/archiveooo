@@ -94,10 +94,10 @@ def _upload_to_s3(basedir: str, fp: BinaryIO, basename: str, its_sha256: str) ->
     obj = s3.Object(settings.S3_BUCKET, s3key)
     obj.Acl().put(ACL="public-read")
     assert obj.bucket_name == settings.S3_BUCKET
-    assert s3.meta.client.get_bucket_location(Bucket=obj.bucket_name)['LocationConstraint'] == 'us-west-2'  # TODO
+    assert s3.meta.client.get_bucket_location(Bucket=obj.bucket_name)['LocationConstraint'] == settings.AWS_REGION
     #logger.debug("Changed ACL on S3 key {} to 'public-read'".format(s3key))
 
-    return f"https://s3.us-west-2.amazonaws.com/{settings.S3_BUCKET}/{s3key}"
+    return f"https://s3.{settings.AWS_REGION}.amazonaws.com/{settings.S3_BUCKET}/{s3key}"
 
 
 def run_tester_cmd(path:str, arg:str=None, format=None,

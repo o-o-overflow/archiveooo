@@ -137,7 +137,7 @@ def find_ubuntu_ami() -> str:
     logger.debug("Ubuntu's daily AMI JSON dates to %s, latest version: %s", j['updated'], latest_ver_num)
     latest_ver = p['versions'][latest_ver_num]
     items = latest_ver['items'].values()  # Not sure if item keys are stable. If so, could directly select usww2hs (us-west-2, hvm, ssd?)
-    matching = [ x for x in items if x['crsn'] == 'us-west-2' ]  # and x['virt'] == 'hvm' and x['root_store'] == 'ssd'
+    matching = [ x for x in items if x['crsn'] == settings.AWS_REGION ]  # and x['virt'] == 'hvm' and x['root_store'] == 'ssd'
     assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
     ami = matching[0]
     return ami['id']
@@ -167,10 +167,10 @@ def get_boto3_session(profile:Optional[str]=None):
     avail = boto3.Session().available_profiles
     p = profile if profile else settings.AWS_PROFILE
     if p in avail:
-        return boto3.Session(profile_name=p, region_name='us-west-2')
+        return boto3.Session(profile_name=p, region_name=settings.AWS_REGION)
     else:
         assert profile is None
-        return boto3.Session(region_name='us-west-2',
+        return boto3.Session(region_name=settings.AWS_REGION,
                 aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
 

@@ -24,6 +24,8 @@ AWS_PROFILE = None
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
 
+AWS_REGION = 'us-west-2'  # VMs are spawned in this region. The IAM account can be limited to access this region only.
+
 
 # Study settings
 STUDY_METADATA_PATH = None

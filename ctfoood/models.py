@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
@@ -60,7 +61,7 @@ class UserSettings(models.Model):
         return self.user.email
 
     def fill_default_region(self, request) -> str:
-        return self.default_region if self.default_region else 'us-west-2'  # TODO: geolocate, per-provider
+        return self.default_region if self.default_region else settings.AWS_REGION  # TODO: geolocate, per-provider
     def fill_default_allowed_ip(self, request) -> str:
         dyn = get_user_ip(request)
         return dyn if dyn else self.default_allowed_ip
