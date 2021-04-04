@@ -552,7 +552,7 @@ def create_public_file(name: str, fp: BinaryIO, checkout: Optional[ChalCheckout]
         local_dir= os.path.join(settings.PUBLIC_FILES_ROOT, relative_dir)
         local_path = os.path.join(settings.PUBLIC_FILES_ROOT, relative_path)
 
-        os.makedirs(local_dir, exist_ok=True)
+        os.makedirs(local_dir, mode=0o755, exist_ok=True)
         if os.path.exists(local_path):
             with open(local_path, 'rb') as f:
                 oldcontent = f.read()
@@ -561,7 +561,7 @@ def create_public_file(name: str, fp: BinaryIO, checkout: Optional[ChalCheckout]
                 logger.critical("CORRUPT LOCAL PUBLIC FILE?!? %s", local_path)
                 assert its_sha256 == oldsha256, f"corrupt local file, not sure what to do: {local_path}"
         else:
-            with open(local_path, 'wb') as f:
+            with open(local_path, 'wb', mode=0o644) as f:
                 f.write(content)
 
         url = settings.PUBLIC_FILES_URL + relative_path
@@ -592,7 +592,7 @@ def create_docker_image_tar(tag: str) -> Tuple[Optional[str], Optional[str], Opt
     local_path_tar = os.path.join(rootdir, relative_path_tar)
     local_path_tar_gz = os.path.join(rootdir, relative_path_tar_gz)
 
-    os.makedirs(local_dir, exist_ok=True)
+    os.makedirs(local_dir, mode=0o755, exist_ok=True)
     assert not os.path.exists(local_path_tar)
     assert not os.path.exists(local_path_tar_gz)
 
@@ -615,6 +615,7 @@ def create_docker_image_tar(tag: str) -> Tuple[Optional[str], Optional[str], Opt
         return None, None, None
 
     if not _get_s3():
+        os.chmod(local_path_tar_gz, 0o444)
         return local_path_tar_gz, (settings.IMAGES_DOWNLOAD_URL + relative_path_tar_gz), sha256
     with open(local_path_tar_gz, 'rb') as lf:
         url = _upload_to_s3('docker_images', lf, tarbasename + '.gz', sha256)  # basedir name used in delete_stale_files too
