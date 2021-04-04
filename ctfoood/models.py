@@ -16,6 +16,7 @@ from ctfoood.helpers import ssh_keys_validator, ssh_private_key_validator, \
         get_user_ip, \
         service_port_validator, \
         gen_pingback_uuid, \
+        delete_public_file_if_possible, \
         _clean_name_for_tags
 
 
@@ -342,6 +343,14 @@ class ChalCheckout(models.Model):
         get_latest_by = '-creation_time'
         indexes = [ models.Index(fields=('chal','public')), ]  # creation_time ?
 
+    # TODO: also delete from S3?
+    def post_delete(self, *args, **kwargs):
+        delete_public_file_if_possible(self.docker_image_tgzpath)
+        super().post_delete(*args, **kwargs)
+    def delete(self, *args, **kwargs):
+        delete_public_file_if_possible(self.docker_image_tgzpath)
+        super().delete(*args, **kwargs)
+
 
 class VM(models.Model):
     """VM we created, with one deployed challenge"""
@@ -376,13 +385,13 @@ class VM(models.Model):
     # For the study
     study_opted_in = models.BooleanField(default=False)
 
-    # TODO: liveness check?
     def __str__(self):
         if self.checkout:
             return f"{self.ip}:{self.checkout.exposed_port} for {self.checkout.chal}, id {self.id}"
         return f"{self.ip} UNKNOWN CHECKOUT, id {self.id}"
     class Meta:
         verbose_name = "VM"
+    # delete object -> delete instance?
 
 
 # Extra stuff on challenge pages
@@ -402,19 +411,13 @@ class PublicFile(models.Model):
     class Meta:
         unique_together = (('checkout','filename'),)
         order_with_respect_to = 'checkout'
+
+    # TODO: also delete from S3?
     def post_delete(self, *args, **kwargs):
-        try:
-            os.unlink(self.local_path)
-            subprocess.call(['rmdir', '--ignore-fail-on-non-empty', '--parents', os.path.dirname(self.local_path)])
-        except Exception:
-            pass
+        delete_public_file_if_possible(self.local_path)
         super().post_delete(*args, **kwargs)
     def delete(self, *args, **kwargs):
-        try:
-            os.unlink(self.local_path)
-            subprocess.call(['rmdir', '--ignore-fail-on-non-empty', '--parents', os.path.dirname(self.local_path)])
-        except Exception:
-            pass
+        delete_public_file_if_possible(self.local_path)
         super().delete(*args, **kwargs)
 
 
@@ -437,7 +440,6 @@ class SpoileredNote(models.Model):
         order_with_respect_to = 'chal'
 
 
-# TODO: taggit?
 class Tag(models.Model):
     name = models.CharField(max_length=20, primary_key=True)
     def __str__(self):

@@ -102,3 +102,12 @@ def _clean_name_for_tags(s:str) -> str:
 def gen_pingback_uuid() -> str:
     """Must match django's urlpattern GET"""
     return "".join(random.choices(string.ascii_letters + string.digits, k=20))
+
+
+def delete_public_file_if_possible(f: str) -> None:
+    """Used when deleting checkouts or public files. The file might have already been deleted (i.e., tempfiles)"""
+    try:
+        os.unlink(f)
+        subprocess.call(['rmdir', '--ignore-fail-on-non-empty', '--parents', os.path.dirname(f)])
+    except Exception:
+        pass
