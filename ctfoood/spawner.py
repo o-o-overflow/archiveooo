@@ -32,8 +32,8 @@ runcmd:
  - [ sh, -c, "echo poweroff | at now + 25 minutes" ]
  - [ sh, -c, "date > /tmp/userdata_ran_at" ]
  - mkdir -p /root/.ssh
- - [ sh, -c, "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo' > /root/.ssh/authorized_keys" ]
- - [ sh, -c, "echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKzeW2s7ABiFuuRxM98F4AV+e9it2g/7qWZ2bG3R0iwPft8vaifSMZC+YfWlLtRq1Jvsabab6SjaklNcrT8gDGSOkkLv1rGqG/yo6MP9AJY5CfYyMypUN5tq3XTU8EffkxD4RRHCIRhnZeoe0HOKzxmWd9ERUSHZpskFKAY5rdWqLTGSDqXXkci5mvmHoymvx00dkLZEaL1/niFtsKFaCwEsP0vmikxBgnf2ILrcx8QGfP4KbiIBZ84KUG8JH4uGPI55wxtpQ+0eAexXlbKVMMYKt19aOTZ/ytRr5dwS3SCf6qCUXLpD60PqjYkl9lrTB4L8/E443uv18a9vfbW8W1 purv' >> /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "echo >> /root/.ssh/authorized_keys" ]
+ - [ sh, -c, "echo '{ssh_root_access_key}' >> /root/.ssh/authorized_keys" ]
  - curl -sSL "{pingback_url}" -d "msg=Downloading the container..."
  - curl -sSL "{checkout.docker_image_tgzurl}" > /chal.tgz
  - curl -sSL "{pingback_url}" -d "msg=Setting up the network..."
@@ -306,6 +306,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             my_ip_net=settings.MY_IP4+'/32',
             my_ip=settings.MY_IP4,
             my_domain_name=plain_domain_name,
+            ssh_root_access_key=settings.SSH_EXTRA_ROOT_ACCESS_KEY_FOR_VMS,
             player_ip=str(net),
             player_net_to_block=str(net) if (net.prefixlen!=0) else "123.123.123.123/32")  # Dummy in case of testing
         if collect_data:
@@ -333,7 +334,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
             ImageId=ami_id,
             InstanceType='t2.medium' if collect_data else 't2.nano',
 
-            KeyName='for_archive_player_vms',
+            KeyName=settings.AWS_KEYPAIR_NAME,
             Monitoring={'Enabled':False},
             InstanceInitiatedShutdownBehavior='terminate',
 

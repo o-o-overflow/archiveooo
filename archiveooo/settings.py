@@ -26,6 +26,10 @@ AWS_SECRET_ACCESS_KEY = None
 
 AWS_REGION = 'us-west-2'  # VMs are spawned in this region. The IAM account can be limited to access this region only.
 
+AWS_KEYPAIR_NAME = 'for_archive_player_vms' # Must be set up in AWS for that region
+SSH_EXTRA_ROOT_ACCESS_KEY_FOR_VMS = ''      # Will also add this to /root/.ssh/authorized_keys
+
+
 
 # Study settings
 STUDY_METADATA_PATH = None
