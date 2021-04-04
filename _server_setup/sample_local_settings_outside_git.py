@@ -30,8 +30,12 @@ S3_BUCKET=None    # "archive-ooo-public"
 
 
 # These are used both to create VMs and to upload to S3
+AWS_PROFILE = None
 AWS_ACCESS_KEY_ID = None
 AWS_SECRET_ACCESS_KEY = None
+AWS_REGION = 'us-west-2'
+AWS_KEYPAIR_NAME = 'for_archive_player_vms'
+SSH_EXTRA_ROOT_ACCESS_KEY_FOR_VMS = '' # 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAZg91lJwh6lhAdK3GmxVKJD/LPFbPRMGiqCtR7/YWhD jacopo'
 
 
 # Optionally, protect VM spawning with reCAPTCHA
@@ -46,7 +50,8 @@ DOCKERHUB_PASSWORD = None
 
 
 # See settings.py for other values, most importantly:
-#IMAGES_DOWNLOAD_ROOT = '/tmp/'
+IMAGES_DOWNLOAD_ROOT = '/var/www/html/dockerimg/'
+PUBLIC_FILES_ROOT = '/var/www/html/public_files/'
 
 # These are used to allow the VM to pingback
 # settings.py tries to auto-determine them, but it's probably best to configure them here
