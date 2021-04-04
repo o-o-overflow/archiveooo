@@ -148,7 +148,7 @@ def run_tester_cmd(path:str, arg:str=None, format=None,
     if returncode != 0:
         return returncode, tester_output, True, True
 
-    # TODO: copied to from_chalmanager.py
+    # TODO: copied from_chalmanager.py
     tester_output = '\n'.join(l for l in tester_output.splitlines() \
             if ('WARNING Public file:' not in l) \
             and ('LogLevel' not in l) \
@@ -532,9 +532,6 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
 
 def create_public_file(name: str, fp: BinaryIO, checkout: Optional[ChalCheckout]=None) -> PublicFile:
     """Stores both locally (or in S3_BUCKET) and in the db + associates the file with the ChalCheckout"""
-    # TODO: unique per hash and filename, no checkout link here
-    # TODO: link from github if that's public
-    # TODO: large files
     assert re.match("[A-Za-z0-9_ .-]+\Z", name)
     content = fp.read()
     its_sha256 = hashlib.sha256(content).hexdigest()

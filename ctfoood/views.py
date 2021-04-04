@@ -61,7 +61,7 @@ def set_achievement(us: UserSettings, a: Achievement, give:bool=True, request=No
 def recalculate_achievements(user: User, request=None) -> None:
     us = get_settings(user)
     public_chals = Chal.objects.filter(public_checkout__isnull=False)\
-            .exclude(solved_by=us).order_by('-format', 'name')  # TODO: easy first?
+            .exclude(solved_by=us).order_by('-format', 'name')
     solved_chals = Chal.objects.filter(public_checkout__isnull=False,
             solved_by=us).order_by('-format', 'name')
     # Tag-based achievements
@@ -107,7 +107,6 @@ def add_recaptcha_sitekey(ctx):
     return ctx
 
 
-# TODO: search? django-filter? tables2?
 
 @require_safe
 @vary_on_cookie
@@ -184,7 +183,6 @@ def chalpage(request, name):
 
 @vary_on_cookie
 def checkoutpage(request, chalname, checkoutid):
-    # TODO: split out this part or unify with spawn_vm
     checkout = get_object_or_404(ChalCheckout, id=checkoutid)
     chal = get_object_or_404(Chal, name=chalname)
     private = chal.has_private_access(request.user)
@@ -487,7 +485,6 @@ urlpatterns = [
     django.urls.path('delete_vm/<vmid>/', delete_vm, name='delete_vm'),
     django.urls.path('run_test_deployed/<vmid>/', run_test_deployed, name='run_test_deployed'),
     django.urls.path('get_vm_status', get_vm_status, name='get_vm_status'),
-    # TODO: cmd to replay pcap, run tester, ... django.urls.path('vm/<vmid>', vmpage),
 
     django.urls.path('accounts/', django.urls.include('django.contrib.auth.urls')),
     django.urls.path('register/', register, name='register'),

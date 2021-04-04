@@ -1,6 +1,8 @@
-TODO:
-   - call delete_stale_files periodically
+Potential TODO:
+   - call delete_stale_files periodically / implement s3 file delete()
 
+   - spawn with random flags if possible
+   - recaptcha on flag submit + password reset?
 
    - golf
    - time the speedrun
@@ -9,8 +11,6 @@ TODO:
 
    - replay pcaps
 
-
-create users / etc. via cloud-config?
-install docker separately to provide earlier progress message (but apt-get -qq install docker.io didn't work!)
-
-create swapfile?
+   - AMI for faster creation (as in the study)
+   - spawn in user-selected region
+   - ipv6

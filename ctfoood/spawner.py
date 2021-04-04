@@ -122,7 +122,7 @@ def find_ubuntu_ami() -> str:
         if wget.returncode != 0:
             logger.critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
             logging.getLogger('django').critical("Failed to wget the new ubuntu daily file!!! I will try to use what's already there. \nStdout: %s\nStderr: %s", wget.stdout, wget.stderr)
-            # ^^ Should email me. TODO: setup AdminEmailHandler for the OOO logger ^^
+            # ^^ Should email me.
             #if raise_on_fetch_error:
             #    msg = "Failed to wget the new ubuntu daily file!!!\nStdout: %s\nStderr: %s" % (wget.stdout, wget.stderr)
             #    raise RuntimeError(msg)
@@ -177,19 +177,6 @@ def get_boto3_session(profile:Optional[str]=None):
 def get_ec2(profile:Optional[str]=None):
     return get_boto3_session(profile=profile).resource("ec2")
 
-# XXX: switched to single IPv4Network for simplicity
-#def make_ip_ranges(nets) -> Dict[str,List[Dict[str,str]]]:
-#    v4 = []; v6 = []
-#    for n in nets:
-#        if isinstance(n, ipaddress.IPv6Network):
-#            v6.append({'CidrIpv6': str(n)})
-#        elif isinstance(n, ipaddress.IPv4Network):
-#            v4.append({'CidrIp': str(n)})
-#        else:
-#            if '/' not in str(n):
-#                n = str(n) + '/32'
-#            v4.append({'CidrIp': str(n)})
-#    return {'IpRanges': v4, 'Ipv6Ranges': v6}
 
 def make_ip_perms(net:ipaddress.IPv4Network, port:int=0) -> Dict:
     return {'FromPort': port if port else 0,
@@ -239,6 +226,7 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
         collect_data: bool = False,
         instant_cleanup=False) -> Tuple[Optional[str],Optional[str]]:
     """Returns vm.id, vm.uuid"""
+    # TODO: ask the user for the preferred region, use it instead of AWS_REGION
     vm = None
     def _info(msg, *args, squared=' ', becomes_last=False):
         logger.info(msg.strip(), *args)
@@ -346,7 +334,6 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
                     'VolumeSize': 16,
             }}],
             # CANNOT USE (won't have the keypair): MetadataOptions={'HttpEndpoint': 'disabled'},
-            # TODO: set later?
             MetadataOptions={'HttpTokens': 'required'},
             # ClientToken
             TagSpecifications=[{'ResourceType':'instance', 'Tags':[{'Key':'archivevm', 'Value':str(vm.id)}, {'Key':'Name', 'Value':'player_vm_'+str(vm.id)}]}],
@@ -425,7 +412,6 @@ def delete_ooo_vm(vm:VM, raise_exceptions=False) -> Tuple[int,str]:
 
 
 def minimize_egress(vm: VM) -> bool:
-    # TODO: study version
     try:
         ec2 = get_ec2()
         assert vm.security_group_id

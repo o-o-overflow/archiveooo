@@ -24,6 +24,7 @@ from ctfoood.helpers import ssh_keys_validator, ssh_private_key_validator, \
 
 class APICredential(models.Model):
     """Saved credentials to AWS"""
+    # XXX: This is not actually in use
     # TODO: name = models.CharField(max_length=100, unique_together='owner_group')
     id = models.AutoField(primary_key=True)
     owner_group = models.ForeignKey(Group, on_delete=models.CASCADE)
@@ -48,11 +49,8 @@ class UserSettings(models.Model):
     hide_videos = models.BooleanField(default=False)
 
     default_credentials = models.ForeignKey(APICredential, blank=True, null=True, on_delete=models.SET_NULL) # TODO: default to an accessible one
-    default_region = models.CharField(blank=True, max_length=30)  # TODO: choice? geolocate if None?
+    default_region = models.CharField(blank=True, max_length=30)  # TODO: choice? geolocate if None? Static region for now (settings.AWS_REGION)
     default_allowed_ip = models.GenericIPAddressField(protocol='IPv4', blank=True, null=True)  # TODO: IPv6
-    # TODO: pagination settings?
-
-    # TODO[auto-pull]: github_token = models.TextField(max_length=50)
 
     def get_groups(self):
         return self.user.groups.all()
@@ -91,6 +89,7 @@ class UserSettings(models.Model):
 
 # DB model for non-default VM settings
 # TODO: feasible for these go in info.yml?
+# XXX: this is not currently implemented, in fact it's used to block spawning VMs
 class VMSetup(models.Model):
     id = models.AutoField(primary_key=True)
     allow_player_docker = models.BooleanField(default=False,
@@ -106,7 +105,7 @@ class VMSetup(models.Model):
 
 
 
-# TODO: permissions (idea is Chal is editable by owner_user || owner_group || staff)
+# TODO: verify permission system (idea is Chal is editable by owner_user || owner_group || staff)
 
 
 # DB models for challenges and their deployments
@@ -168,7 +167,7 @@ class Chal(models.Model):
     solves_n = models.PositiveSmallIntegerField(default=0, help_text="Number of solves during the game.")
     solves_url = models.URLField('solves data URL', blank=True)  # TODO: JSON as from the scoreboard
 
-    pcaps_url = models.URLField('pcaps URL', blank=True, help_text="Link for players to download pcaps.") # TODO: replay pcaps
+    pcaps_url = models.URLField('pcaps URL', blank=True, help_text="Link for players to download pcaps.") # XXX: would be cool to auto-replay the pcap against the VM
     pcaps_notice = models.CharField('pcaps notice', max_length=500, blank=True, help_text="Notice for players.")
 
 
@@ -283,7 +282,7 @@ class ChalCheckout(models.Model):
 
     # Info persisted from info.yml (to generate the page and act even if no recent git clone happened)
     description = models.TextField(blank=True, help_text="markdown + linebreaks")
-    authors = models.CharField(blank=True, max_length=500) # TODO: list of users? links?
+    authors = models.CharField(blank=True, max_length=500) # TODO: link?
     tags = models.ManyToManyField('Tag', blank=True)
     exposed_port = models.PositiveIntegerField(blank=True, null=True, validators=[service_port_validator])
     default_flag = models.CharField(max_length=FLAG_MAX_LEN)
@@ -291,6 +290,7 @@ class ChalCheckout(models.Model):
 
     # To speed up operations, can keep files around for some time
     # TODO: periodic cleanup of code, docker images, maybe private checkouts themselves
+    # XXX: this is not actually implemented
     cache = models.CharField(max_length=260, help_text="Path to the last checkout", blank=True)
     cache_until = models.DateTimeField(blank=True, null=True)
     _now_plus_cache_time = None   # old
@@ -308,7 +308,6 @@ class ChalCheckout(models.Model):
     def get_tags(self):
         return self.tags.union(self.chal.extra_tags.all()).distinct()
     def public_git_clone_cmd(self) -> str:
-        # TODO: make closer to the real cmd
         if (self.chal.source_url.startswith('https://github.com/')) and not self.dirty_tree:
             return f'git clone {self.chal.source_url}' + \
                     (f' -b {self.branch}' if self.branch else '')
@@ -343,7 +342,7 @@ class ChalCheckout(models.Model):
         get_latest_by = '-creation_time'
         indexes = [ models.Index(fields=('chal','public')), ]  # creation_time ?
 
-    # TODO: also delete from S3?
+    # Also delete from S3? But see delete_stale_files.py
     def post_delete(self, *args, **kwargs):
         delete_public_file_if_possible(self.docker_image_tgzpath)
         super().post_delete(*args, **kwargs)
@@ -397,7 +396,6 @@ class VM(models.Model):
 # Extra stuff on challenge pages
 
 class PublicFile(models.Model):
-    # TODO: make unique by sha256 and filename, no more checkout link
     id = models.AutoField(primary_key=True)
     checkout = models.ForeignKey(ChalCheckout, blank=True, null=True,  # Not really expecting it to be NULL if in use
             on_delete=models.CASCADE, related_name='public_files')
@@ -411,8 +409,7 @@ class PublicFile(models.Model):
     class Meta:
         unique_together = (('checkout','filename'),)
         order_with_respect_to = 'checkout'
-
-    # TODO: also delete from S3?
+    # Also delete from S3? But see delete_stale_files.py
     def post_delete(self, *args, **kwargs):
         delete_public_file_if_possible(self.local_path)
         super().post_delete(*args, **kwargs)

@@ -11,19 +11,6 @@ import subprocess
 import tempfile
 
 
-# XXX: switched to single IPv4 for simplicity in UI and iptables -- can put back in if wanted
-#def get_ip_networks(txt: str):
-#    """Split out into ip_networks"""
-#    txt = txt.replace(',',' ').replace(';', ' ')
-#    return tuple( (ipaddress.ip_network(s) if ('/' in s) else ipaddress.ip_network(s+'/32')) \
-#            for s in txt.split() )
-#
-#def get_ip_networks_validator(txt: str) -> None:
-#    try:
-#        get_ip_networks(txt)
-#    except Exception as e:
-#        raise ValidationError("Wrong format for the IP address whitelist. Expecting subnets separated by spaces, commas, or semicolons. %(etype)s: %(e)s",
-#                params={'e':e, 'etype':type(e)} )
 def get_ip_networks_validator(txt: str) -> None:  # for old migrations
     pass
 
@@ -42,7 +29,6 @@ def get_user_ip(request) -> str:
 
 def make_deploy_key_file(k:str) -> str:
     """Creates a temporary file, returns the name. Caller removes it when done."""
-    # TODO: mkdtemp?
     with tempfile.NamedTemporaryFile('wb', prefix='mia_deploy_key_', delete=False) as tmpf:
         for l in k.splitlines():
             tmpf.write(l.encode('ascii','strict') + b"\n")
@@ -66,7 +52,7 @@ def ssh_key_validator(k: str, private:bool=False) -> str:
         # Besides ssh-keygen, we must exclude authorized_keys options
         keytype = k.split()[0]
         if keytype not in (
-                'ssh-rsa', 'ssh-ed25519',  # TODO: force ssh-rsa for old VMs?
+                'ssh-rsa', 'ssh-ed25519',
                 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp512'):
             raise ValidationError("Invalid ssh key type: %(kt)s", params={'kt':keytype})
     deploy_key_file = None
