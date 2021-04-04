@@ -7,8 +7,7 @@ coloredlogs
 markdown
 
 # Optionally, see DATABASES
-#mysqlclient
-psycopg2
+#psycopg2
 
 # Optionally, to store public files / images + spawn VMs
 boto3
