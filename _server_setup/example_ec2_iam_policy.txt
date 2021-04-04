@@ -1,5 +1,6 @@
 // Replace the region and your AWS account ID
 // If using S3, also add access to that bucket
+// DescribeInstances is for the periodic cleaner, which can be separate.
 
 {
     "Version": "2012-10-17",
