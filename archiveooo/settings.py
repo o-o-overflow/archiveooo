@@ -61,6 +61,26 @@ CSRF_COOKIE_SAMESITE = 'Strict'
 CSRF_COOKIE_SECURE = True
 
 
+# Directories files are written to
+#
+# At a minimum, the runner must have write access IMAGES_DOWNLOAD_ROOT, as this is where docker images are saved.
+# If not using S3, it must also be exposed publicly for downloads (IMAGES_DOWNLOAD_URL).
+# The same considerations apply to PUBLIC_FILES_ROOT and PUBLIC_FILES_URL
+#
+# They are similar in concept to Django's media/upload dir
+PUBLIC_FILES_ROOT = BASE_DIR + '/public_files/'
+PUBLIC_FILES_URL = 'https://'+MY_DOMAIN_NAME+'/public_files/'
+IMAGES_DOWNLOAD_ROOT = BASE_DIR + '/dockerimg/'   # docker save
+IMAGES_DOWNLOAD_URL = 'https://'+MY_DOMAIN_NAME+'/dockerimg/'
+if os.getenv("DJANGO_S3_BUCKET"):
+    S3_BUCKET = os.getenv("DJANGO_S3_BUCKET")
+
+
+# See Django's docs
+ALLOWED_HOSTS = [ MY_DOMAIN_NAME, ]
+
+
+
 #####################################################################
 # Settings can be kept outside git...
 #####################################################################
@@ -91,35 +111,18 @@ if not "DATABASES" in vars():
 
 
 
+
+
+
 #####################################################################
 #
-# Directories files are written to
+# The rest is typically fine as-is
 #
-# At a minimum, the runner must have write access IMAGES_DOWNLOAD_ROOT, as this is where docker images are saved.
-# If not using S3, it must also be exposed publicly for downloads (IMAGES_DOWNLOAD_URL).
-# The same considerations apply to PUBLIC_FILES_ROOT and PUBLIC_FILES_URL
-#
-# They are similar in concept to Django's media/upload dir
-PUBLIC_FILES_ROOT = BASE_DIR + '/public_files/'
-PUBLIC_FILES_URL = 'https://'+MY_DOMAIN_NAME+'/public_files/'
-IMAGES_DOWNLOAD_ROOT = BASE_DIR + '/dockerimg/'   # docker save
-IMAGES_DOWNLOAD_URL = 'https://'+MY_DOMAIN_NAME+'/dockerimg/'
-if os.getenv("DJANGO_S3_BUCKET"):
-    S3_BUCKET = os.getenv("DJANGO_S3_BUCKET")
 
 
-
-ALLOWED_HOSTS = ['*']         # See Django's docs
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 
-
-
-
-#####################################################################
-#
-# There should be no need to change anything below this line
-#
 
 # Application definition
 
