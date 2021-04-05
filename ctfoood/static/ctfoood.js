@@ -92,8 +92,9 @@ function recaptcha_ooo_submit(token)
     d.append('ooo_allowed_ip', document.getElementsByName('ooo_allowed_ip')[0].value);
     if (document.getElementsByName('i_will_be_good')[0].checked)
         d.append('i_will_be_good', document.getElementsByName('i_will_be_good')[0].checked)
-    if (document.getElementsByName('i_am_opting_in_for_data_collection')[0].checked)
-        d.append('i_am_opting_in_for_data_collection', document.getElementsByName('i_am_opting_in_for_data_collection')[0].checked)
+    if (document.getElementsByName('i_am_opting_in_for_data_collection').length != 0)
+        if (document.getElementsByName('i_am_opting_in_for_data_collection')[0].checked)
+            d.append('i_am_opting_in_for_data_collection', document.getElementsByName('i_am_opting_in_for_data_collection')[0].checked)
     d.append('g-recaptcha-response', token);
 
     let xhr = new XMLHttpRequest();
