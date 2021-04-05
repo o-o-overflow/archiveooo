@@ -305,11 +305,9 @@ def spawn_vm_on_ooo(request, checkoutid):
     if collect_data:
         assert settings.S3_BUCKET_STUDY
 
-    ip_str = request.POST.get('ooo_allowed_ip')
-    if not ip_str:
-        raise PermissionDenied
+    ip_str = str(request.POST.get('ooo_allowed_ip', default=""))
     try:
-        ip = ipaddress.IPv4Address(str(ip_str))  # TODO: IPv6
+        ip = ipaddress.IPv4Address(ip_str)  # TODO: IPv6
         assert ip.is_global  # enough?
         assert not ip.is_multicast
         assert not ip.is_private
@@ -319,10 +317,16 @@ def spawn_vm_on_ooo(request, checkoutid):
         assert not ip.is_link_local
         net = ipaddress.IPv4Network(str(ip) + '/32')
     except Exception:
-        if settings.DEBUG:
+        if request.user.is_staff:  # Useful to allow run_test_deployed
+            if not ip_str: ip_str = "0.0.0.0/0"
+            try:
+                net = ipaddress.IPv4Network(ip_str)
+            except Exception:
+                return HttpResponseBadRequest("Invalid Ipv4Network")
+        elif settings.DEBUG:
             raise
-        messages.error(request, "Invalid IP address.")
-        return redirect(checkout)
+        else:
+            return HttpResponseBadRequest("Invalid IP address")
 
     vmid, uuid = spawn_ooo(checkout=checkout, net=net, user=request.user, collect_data=collect_data)
     resp = f"{vmid},{uuid}" if vmid else "FAILED"

@@ -37,6 +37,10 @@ function show_vm_msg(m) {
 
 function vm_spawn_error(e) { show_vm_msg("ERROR"); }
 function vm_spawned(e) {
+    if (this.status != 200) {
+        show_vm_msg("Error! " + this.responseText);
+        return;
+    }
     show_vm_msg("Spawned!");
     let r = this.responseText.split(",");
     vmid = r[0];

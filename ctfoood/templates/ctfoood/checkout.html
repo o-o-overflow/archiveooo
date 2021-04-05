@@ -215,8 +215,13 @@
     <form action="{% url 'spawn_vm_on_ooo' checkout.id %}" target="_blank" method="post" id="spawn_on_ooo_form">
         {% csrf_token %}
         <p><label style="vertical-align: middle" for="ooo_allowed_ip" title="Specify your own IP address. The VM will allow connections from this IP. Only IPv4 is currently supported.">IPv4 to allow connections from:</label>
-	<input type="text" pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" required style="vertical-align: middle" id="ooo_allowed_ip" name="ooo_allowed_ip"
+	<input type="text"
+                {% if not user.is_staff %} required pattern="^([0-9]{1,3}\.){3}[0-9]{1,3}$" {% endif %}
+                style="vertical-align: middle" id="ooo_allowed_ip" name="ooo_allowed_ip"
 		placeholder="your IP address" value="{{ user_ip }}">
+        {% if user.is_staff %}
+            <span style="color: #888">Empty to disable restrictions.</span>
+        {% endif %}
 	<p><input type="checkbox" required id="i_will_be_good" name="i_will_be_good">
         <label for="i_will_be_good">I understand that there are no guarantees, and I promise I'll be good.</label>
         <p>
@@ -238,7 +243,7 @@
 	{% endif %}
         <span id="vm_ip"></span>
         <span id="vm_message"></span>
-        {% if private %} 
+        {% if user.is_staff %} 
             {# Javascript will show it and add /vmid to the href #}
             <a style="display: none" id="run_test_deployed" href="/run_test_deployed" target="_blank">Run the tester</a>
         {% endif %}
