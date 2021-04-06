@@ -195,7 +195,7 @@ class Chal(models.Model):
         t = self.extra_tags
         if self.public_checkout:
             t = t.union(self.public_checkout.tags.all())
-        return t.distinct()
+        return t.all()
 
     def is_public(self) -> bool:
         return (self.public_checkout is not None)
@@ -306,7 +306,7 @@ class ChalCheckout(models.Model):
     def get_absolute_url(self):
         return f"{self.chal.get_absolute_url()}{self.id}/"
     def get_tags(self):
-        return self.tags.union(self.chal.extra_tags.all()).distinct()
+        return self.tags.union(self.chal.extra_tags.all()).all()
     def public_git_clone_cmd(self) -> str:
         if (self.chal.source_url.startswith('https://github.com/')) and not self.dirty_tree:
             return f'git clone {self.chal.source_url}' + \
