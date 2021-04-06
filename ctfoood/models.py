@@ -128,7 +128,7 @@ class Chal(models.Model):
     """Base challenge info. Checkouts add onto this."""
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True,
-            validators=[RegexValidator(regex='\A[0-9a-zA-Z_-]+\Z', message='Incorrect name despite the lax regex, check with ./tester.')])
+            validators=[RegexValidator(regex=r'\A[0-9a-zA-Z_-]+\Z', message='Incorrect name despite the lax regex, check with ./tester.')])
     format = models.CharField(choices=FORMAT_CHOICES, max_length=10, help_text='Year / format')
     type = models.CharField(choices=TYPE_CHOICES, max_length=20, default='normal')
 
@@ -268,13 +268,13 @@ class ChalCheckout(models.Model):
     docker_image_tgzpath = models.CharField(blank=True, null=True, max_length=300, help_text="Local path to the docker-saved.tar.gz")
     docker_image_tgzurl = models.CharField(blank=True, max_length=300, help_text="URL to the docker-saved.tar.gz")
     docker_image_tgzsha256 = models.CharField('docker-saved.tar.gz SHA256', blank=True, max_length=64,
-            validators=[RegexValidator(regex='\A[0-9a-f]{64}\Z', message='Must be lowercase sha256')])
+            validators=[RegexValidator(regex=r'\A[0-9a-f]{64}\Z', message='Must be lowercase sha256')])
 
     dockerhub_uri = models.CharField(max_length=400, blank=True)
 
     # Record of git info, if available
     commit_hash = models.CharField(max_length=56, blank=True,
-            validators=[RegexValidator(regex='\A[0-9a-f]+\Z', message='Must be a git commit hash, lowercase')])
+            validators=[RegexValidator(regex=r'\A[0-9a-f]+\Z', message='Must be a git commit hash, lowercase')])
     dirty_tree = models.BooleanField(default=True)
     branch = models.CharField(max_length=50, blank=True, help_text="Non-default git branch")
     pull_url = models.CharField("pull URL", blank=True, max_length=300, help_text="Argument to git clone")
@@ -403,7 +403,7 @@ class PublicFile(models.Model):
     local_path = models.CharField(max_length=500, blank=True, null=True)
     url = models.CharField('URL', max_length=300)
     sha256 = models.CharField('SHA256', blank=True, max_length=64,
-            validators=[RegexValidator(regex='\A[0-9a-f]{64}\Z', message='Must be lowercase sha256')])
+            validators=[RegexValidator(regex=r'\A[0-9a-f]{64}\Z', message='Must be lowercase sha256')])
     def __str__(self):
         return f"Public file {self.filename} for {self.checkout}"
     class Meta:
