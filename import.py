@@ -4,6 +4,7 @@ import argparse
 import logging
 import os
 import re
+import subprocess
 import sys
 from urllib.request import urlopen
 
@@ -48,7 +49,7 @@ def main():
     parser.add_argument("--public", action='store_true', help="Immediately mark the checkout as public (not the chal)")
     parser.add_argument("--as-default", action='store_true', help="This immediately becomes the new public checkout.")
     parser.add_argument("--dockerhub", action='store_true', help="Push to dockerhub, potentially as the new default")
-    parser.add_argument("chalname", help="Name of the challenge (without the year prefix)")
+    parser.add_argument("chalname", help="Name of the challenge (without the year prefix). Optional for --create-chal")
     parser.add_argument("pull_from", nargs='?', help="Argument to git clone")
     advanced = parser.add_argument_group('Advanced')
     advanced.add_argument("--log-level", metavar='LEVEL', default="DEBUG", help="Default: DEBUG")
@@ -84,7 +85,19 @@ def main():
 
     chal_already_exists = Chal.objects.filter(name=args.chalname).exists()
     if args.create_chal and not chal_already_exists:
-        assert args.pull_from, "Gotta create the challenge from somewhere..."
+        if not args.pull_from:
+            # Allows passing the URL only
+            if ':' not in args.chalname:
+                logger.critical("You didn't specify a URL to pull from, and '%s' didn't look like one either. Pass both the name and the URL if you want to use it.", args.chalname)
+                sys.exit(2)
+            args.pull_from = args.chalname
+            args.chalname = subprocess.check_output(["basename",args.pull_from], universal_newlines=True).strip()
+            if args.chalname.endswith('.git'):
+                args.chalname = args.chalname[:-4]
+            fm = re.match(r'dc[0-9]+[qf]-(.*)', args.chalname)
+            if fm:
+                args.chalname = fm[1]
+            logger.info("Auto-deduced the challenge name: %s", args.chalname)
         y = args.format
         if not y:
             myear = re.search(r'dc[0-9]+[qf]', args.pull_from)
@@ -114,7 +127,7 @@ def main():
 
         chal = Chal.objects.create(name=args.chalname, format=y, type='normal',
                 owner_user=user, owner_group=group, autopull_url=args.pull_from,
-                autopull_branch=args.branch,
+                autopull_branch=args.branch if args.branch else "",
                 source_url=source_url, solves_url=solves_url)
         try:
             chal.full_clean()

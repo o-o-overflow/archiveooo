@@ -170,11 +170,6 @@ def git_clone(chal: Chal, pull_from:str, pull_branch:str,
     destdir = tempfile.mkdtemp(prefix='mio_clone_', suffix="__"+chal.name)
 
     # Leaving this in do_autopull for now, as it uses those variables later
-    # TODO: return them from here?
-    #if pull_from is None:
-    #    pull_from = chal.autopull_url
-    #if pull_branch is None:
-    #    pull_branch = chal.autopull_branch
 
     assert pull_from
     cmd = ['git','clone','-q','--depth=1','--no-tags',
