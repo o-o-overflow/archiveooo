@@ -1,0 +1,24 @@
+name: Checks
+on: push
+jobs:
+  pytype:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.x']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Dependencies, etc.
+        run: |
+          pip install -U pip setuptools
+          pip install pytype -r requirements.txt
+          cp archiveooo/settings_ci.py archiveooo/local_settings_outside_git.py
+      - run: pytype --keep-going *.py ctfoood/*.py archiveooo/*.py
+      - run: ./manage.py check --fail-level=WARNING
+      - run: python -X dev ./manage.py check --fail-level=WARNING
+      - run: ./manage.py test
