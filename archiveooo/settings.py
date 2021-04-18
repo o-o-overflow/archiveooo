@@ -99,7 +99,7 @@ if os.getenv('DJANGO_SECRET_KEY') is not None:
 if os.getenv('DJANGO_DEBUG') is not None:
     DEBUG = bool(os.getenv('DJANGO_DEBUG'))
 if os.getenv('DJANGO_ADMINS') is not None:
-    ADMINS = os.getenv('DJANGO_ADMINS').split()
+    ADMINS = os.getenv('DJANGO_ADMINS', '').split()
 
 
 # ... including a DATABASE_URL

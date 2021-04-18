@@ -71,7 +71,7 @@ def ssh_key_validator(k: str, private:bool=False) -> str:
                 params={'out': (e.output.strip() if hasattr(e,'output') else str(e)),  # type: ignore[attr-defined]
                     'kb':k[:10], 't': ('private' if private else 'public')})
     finally:
-        if deploy_key_file: os.unlink(deploy_key_file)
+        if deploy_key_file: os.unlink(deploy_key_file)  # type: ignore[bad-return-value]   # not sure why, isn't p.stdout the only possible return?
 
 
 
