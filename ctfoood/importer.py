@@ -558,8 +558,9 @@ def create_public_file(name: str, fp: BinaryIO, checkout: Optional[ChalCheckout]
                 logger.critical("CORRUPT LOCAL PUBLIC FILE?!? %s", local_path)
                 assert its_sha256 == oldsha256, f"corrupt local file, not sure what to do: {local_path}"
         else:
-            with open(local_path, 'wb', mode=0o644) as f:
+            with open(local_path, 'wb') as f:
                 f.write(content)
+                os.fchmod(f.fileno(), mode=0o644)
 
         url = settings.PUBLIC_FILES_URL + relative_path
 
