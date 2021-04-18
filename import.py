@@ -136,10 +136,6 @@ def main():
 
     chal = Chal.objects.get(name=args.chalname)
 
-    if not args.pull_from:
-        args.pull_from = chal.autopull_url
-        if not args.branch:
-            args.branch = chal.autopull_branch
 
     errcode, output, checkout = do_autopull(chal=chal, user=user, run_tester=args.run_tester,
             pull_from=args.pull_from, pull_branch=args.branch,
