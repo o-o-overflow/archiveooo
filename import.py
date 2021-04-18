@@ -114,6 +114,7 @@ def main():
 
         chal = Chal.objects.create(name=args.chalname, format=y, type='normal',
                 owner_user=user, owner_group=group, autopull_url=args.pull_from,
+                autopull_branch=args.branch,
                 source_url=source_url, solves_url=solves_url)
         try:
             chal.full_clean()
