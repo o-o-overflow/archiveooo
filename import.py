@@ -78,7 +78,8 @@ def main():
     if args.group:
         group = Group.objects.get(groupname=args.group)
         assert group, "No group found with that name"
-    elif user.groups.all():
+    else:
+        assert user.groups, "User {} is not in any group, and right now we need one. Just create a group and add {} to it.".format(user,user)  # TODO: auto-create?
         group = user.groups.order_by('id')[0]
 
 
