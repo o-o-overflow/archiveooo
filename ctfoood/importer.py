@@ -163,17 +163,19 @@ def run_tester_cmd(path:str, arg:str=None, format=None,
     return 0, tester_output, tester_gave_errors, tester_gave_warnings
 
 
-def git_clone(chal: Chal, pull_from:str, pull_branch:str,
+def git_clone(chal: Chal, pull_from:str, pull_branch:str, submodules:bool=True,
         real_terminal=False) -> Tuple[int, str, str, str, Optional[str]]:
     """Return returncode, output, commit_hash, temp dir containing clone, deploy key temp file"""
     clone_output = ""
     destdir = tempfile.mkdtemp(prefix='mio_clone_', suffix="__"+chal.name)
 
-    # Leaving this in do_autopull for now, as it uses those variables later
+    # Note: pull_branch, pull_from, submodules actually have defaults in Chal
+    #       do_autopull handles that for now
 
     assert pull_from
-    cmd = ['git','clone','-q','--depth=1','--no-tags',
-            '--shallow-submodules','--recurse-submodules']
+    cmd = ['git','clone','-q','--depth=1','--no-tags']
+    if submodules:
+        cmd += ['--shallow-submodules','--recurse-submodules']
     # TODO[opt]: --reference-if-able=previous_checkout --dissociate
     if pull_branch:
         cmd += ['-b', pull_branch ]
@@ -222,6 +224,7 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
         real_terminal=False, docker_cleanup=True, make_public:bool=False,
         as_default:bool=False, dockerhub:bool=False,
         tester_log_level:str="WARNING",
+        submodules: Optional[bool]=None,
         just_test_deployed:Optional[VM]=None, just_healthcheck:bool=False) -> Tuple[int, str, Optional[ChalCheckout]]:
     """Returns errcode, output, resulting_checkout_object"""
 
@@ -254,8 +257,13 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             pull_from = chal.autopull_url
         if pull_branch is None:
             pull_branch = chal.autopull_branch
+        if submodules is None:
+            submodules = chal.autopull_submodules
+        if submodules is None:
+            # If it was never specified, default to yes
+            submodules = True
         returncode, clone_output, commit_hash, destdir, dkf = git_clone(chal=chal,
-                pull_from=pull_from, pull_branch=pull_branch,
+                pull_from=pull_from, pull_branch=pull_branch, submodules=submodules,
                 real_terminal=real_terminal)
         if returncode != 0:
             logger.error("git clone failed (%s) %s %s -- %s", chal, pull_from, pull_branch, clone_output)

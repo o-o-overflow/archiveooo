@@ -147,6 +147,7 @@ class Chal(models.Model):
             help_text="Private SSH key -- upload the public one as a deploy key on github")
     autopull_url = models.CharField('autopull URL', blank=True, max_length=300, help_text="Argument to git clone")
     autopull_branch = models.CharField(blank=True, max_length=50, help_text="Override the remote default")
+    autopull_submodules = models.BooleanField(blank=True, null=True, help_text="Whether to pull submodules too. Unspecified currently defaults to yes.")
 
     # Extra fields beyond the info.yml (whose data is captured per-checkout)
     extra_description = models.TextField(blank=True, help_text="markdown, shown below the original description")
@@ -218,6 +219,7 @@ class Chal(models.Model):
     def show_git_clone(self) -> str:
         if not self.autopull_url:
             return "# missing autopull_url :("
+        # TODO: submodules if actually present + used
         return f'git clone [...] {self.autopull_url}' + \
                 (f' -b {self.autopull_branch}' if self.autopull_branch else '') + \
                 (("   # With deploy key "+self.get_deploy_key_fingerprint()) if self.autopull_deploy_key else '')
@@ -306,6 +308,7 @@ class ChalCheckout(models.Model):
     def get_tags(self):
         return self.tags.union(self.chal.extra_tags.all()).all()
     def public_git_clone_cmd(self) -> str:
+        # TODO: submodules if actually present + used
         if (self.chal.source_url.startswith('https://github.com/')) and not self.dirty_tree:
             return f'git clone {self.chal.source_url}' + \
                     (f' -b {self.branch}' if self.branch else '')

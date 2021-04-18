@@ -57,6 +57,7 @@ def main():
     advanced.add_argument("--user", help="Username (default: user with the lowest id)")
     advanced.add_argument("--group", help="Group name (default: the user's), only for --create-chal")
     advanced.add_argument("--no-cleanup", action="store_true", help="Would normally cleanup by grepping 'docker ps' and 'docker images' for the challenge name")
+    advanced.add_argument("--submodules", metavar="yes/no", choices=('yes','no'), help="Override the default")
     forcreatechal = parser.add_argument_group('For --create-chal')
     forcreatechal.add_argument("--format", help="Only used with --create-chal (default: reads it from the git url)")
     forcreatechal.add_argument("--accept-unclean", action="store_true", help="Would normally reject name collisions and the like -- but it's fine if we're sure we're importing only one challenge at a time")
@@ -81,6 +82,11 @@ def main():
     else:
         assert user.groups, "User {} is not in any group, and right now we need one. Just create a group and add {} to it.".format(user,user)  # TODO: auto-create?
         group = user.groups.order_by('id')[0]
+
+    submodules = args.submodules
+    if submodules is not None:
+        submodules = (submodules == 'yes')
+    assert submodules is None or submodules is True or submodules is False
 
 
 
@@ -129,6 +135,7 @@ def main():
         chal = Chal.objects.create(name=args.chalname, format=y, type='normal',
                 owner_user=user, owner_group=group, autopull_url=args.pull_from,
                 autopull_branch=args.branch if args.branch else "",
+                autopull_submodules=submodules,
                 source_url=source_url, solves_url=solves_url)
         try:
             chal.full_clean()
@@ -156,7 +163,8 @@ def main():
             is_autopull=False, real_terminal=True,
             tester_log_level=args.log_level,
             docker_cleanup=not args.no_cleanup, make_public=args.public,
-            as_default=args.as_default, dockerhub=args.dockerhub)
+            as_default=args.as_default, dockerhub=args.dockerhub,
+            submodules=submodules)
 
 
     #print(output)

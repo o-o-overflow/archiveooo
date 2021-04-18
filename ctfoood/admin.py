@@ -63,7 +63,7 @@ class ChalAdmin(admin.ModelAdmin):
                            ('vm_setup', 'owner_user', 'owner_group'),
                            ('public_checkout',),
                            )}),
-        ("Git pull config", {'fields': (('autopull_url','autopull_branch'),),}),
+        ("Git pull config", {'fields': (('autopull_url','autopull_branch','autopull_submodules'),),}),
         ("Git pull deploy key", {'fields': ('autopull_deploy_key',), 'classes': ('collapse',)}),
         ("Game info", {'fields': (('points',),
                                   ('solves_n','solves_url'),
