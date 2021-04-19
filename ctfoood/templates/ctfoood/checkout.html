@@ -220,7 +220,12 @@
                 style="vertical-align: middle" id="ooo_allowed_ip" name="ooo_allowed_ip"
 		placeholder="your IP address" value="{{ user_ip }}">
         {% if user.is_staff %}
-            <span style="color: #888">Empty to disable restrictions.</span>
+            <span style="color: #888">Empty to allow all IPs.</span>
+        {% endif %}
+        {% if user.is_staff %}
+	    <p><input type="checkbox" id="allow_archive_server_ip" name="allow_archive_server_ip">
+            <label for="allow_archive_server_ip">Also allow this server's IP to connect (allows running the tester from here).</label>
+            <p>
         {% endif %}
 	<p><input type="checkbox" required id="i_will_be_good" name="i_will_be_good">
         <label for="i_will_be_good">I understand that there are no guarantees, and I promise I'll be good.</label>

@@ -5,8 +5,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 import django.urls
 import datetime
-import os
-import subprocess
 from typing import List, Tuple
 
 DEFAULT_CACHE_TIME = datetime.timedelta(days=1)
@@ -359,6 +357,7 @@ class VM(models.Model):
     creation_time = models.DateTimeField(auto_now_add=True)
     creation_user = models.ForeignKey(User, on_delete=models.CASCADE)
     flag = models.CharField(max_length=FLAG_MAX_LEN, help_text="The flag that was deployed, randomly-generated if possible.")
+    allow_archive_server_ip = models.BooleanField(default=False, help_text="If true, minimize_egress won't remove access to this very server. Useful to run the tester from here.")
 
     deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(blank=True, null=True)

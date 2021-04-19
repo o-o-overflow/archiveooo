@@ -25,7 +25,7 @@ def main():
     import django
     django.setup()
 
-    from ctfoood.spawner import spawn_ooo, update_vm_ip
+    from ctfoood.spawner import spawn_ooo
     from ctfoood.importer import test_deployed
     from ctfoood.models import Chal, ChalCheckout, VM
     from django.contrib.auth.models import User
@@ -43,6 +43,7 @@ def main():
     advanced = parser.add_argument_group('Advanced')
     advanced.add_argument("--user", help="Username (default: user with the lowest id)")
     advanced.add_argument("--instant-cleanup", action="store_true", help="Create and remove immediately")
+    advanced.add_argument("--block-my-own-ip", action="store_true", help="Won't auto-add MY_IP4 to the allowlist")
 
     args = parser.parse_args()
 
@@ -78,6 +79,7 @@ def main():
             net=args.net,
             user=user,
             collect_data=args.collect_data,
+            allow_archive_server_ip=not args.block_my_own_ip,
             instant_cleanup=args.instant_cleanup)
 
     if not vmid:

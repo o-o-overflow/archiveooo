@@ -224,6 +224,7 @@ def create_security_group(vm: VM, net: ipaddress.IPv4Network, ec2, collect_data:
 
 def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[User],
         collect_data: bool = False,
+        allow_archive_server_ip: bool = False,
         instant_cleanup=False) -> Tuple[Optional[str],Optional[str]]:
     """Returns vm.id, vm.uuid"""
     # TODO: ask the user for the preferred region, use it instead of AWS_REGION
@@ -253,7 +254,8 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     ec2 = get_ec2()
 
     logger.info("Received request to spawn a container for %s", checkout)
-    logger.info("Netmask allowed to connect: %s", net)
+    logger.info("Netmask allowed to connect: %s%s", net,
+            (" + my own ip "+settings.MY_IP4+"/32") if allow_archive_server_ip else "")
     logger.info("Study opt-in: %s", collect_data)
 
     assert checkout.get_imgtag().startswith('oooa-') # See USER_DATA_FMT_STUDY
@@ -280,7 +282,8 @@ def spawn_ooo(checkout: ChalCheckout, net:ipaddress.IPv4Network, user:Optional[U
     instance = None
     try:
         vm = VM.objects.create(checkout=checkout, creation_user=user,
-                flag=checkout.default_flag, study_opted_in=collect_data)
+                flag=checkout.default_flag, study_opted_in=collect_data,
+                allow_archive_server_ip=allow_archive_server_ip)
         vm.full_clean()
         vm.save()
         logger.info("Internal VM ID: %d", vm.id)
@@ -420,10 +423,11 @@ def minimize_egress(vm: VM) -> bool:
         ## XXX: Maybe it would be best to grant the Describe permission and remove by listing
         aws_builtin_default = {'IpProtocol': '-1', 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
         me_net = ipaddress.IPv4Network(settings.MY_IP4 + "/32")
-        data = sg.revoke_egress(IpPermissions=[
-            aws_builtin_default,
-            make_ip_perms(me_net),
-        ])
+        to_revoke = [ aws_builtin_default, ]
+        if vm.allow_archive_server_ip:
+            to_revoke.append(make_ip_perms(me_net))
+
+        data = sg.revoke_egress(IpPermissions=to_revoke)
 
         logger.info("Non-player egress rules removed for %s", sg.id)
         assert data['ResponseMetadata']['HTTPStatusCode'] == 200

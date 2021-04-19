@@ -328,7 +328,11 @@ def spawn_vm_on_ooo(request, checkoutid):
         else:
             return HttpResponseBadRequest("Invalid IP address")
 
-    vmid, uuid = spawn_ooo(checkout=checkout, net=net, user=request.user, collect_data=collect_data)
+    allow_archive_server_ip = (request.POST.get('allow_archive_server_ip', default='') == 'true')
+    if allow_archive_server_ip: assert request.user.is_staff
+
+    vmid, uuid = spawn_ooo(checkout=checkout, net=net, user=request.user, collect_data=collect_data,
+            allow_archive_server_ip=allow_archive_server_ip)
     resp = f"{vmid},{uuid}" if vmid else "FAILED"
     return HttpResponse(resp, status=200 if vmid else 500)
 
@@ -500,7 +504,6 @@ urlpatterns = [
 #    django.urls.path('tag/<name>', tagpage),
 ]
 
-from django.conf import settings
 from django.conf.urls.static import static
 if settings.DEBUG == True:
     urlpatterns += static(settings.PUBLIC_FILES_URL, document_root=settings.PUBLIC_FILES_ROOT)
