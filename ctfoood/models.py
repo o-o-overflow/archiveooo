@@ -195,6 +195,8 @@ class Chal(models.Model):
         if self.public_checkout:
             t = t.union(self.public_checkout.tags.all())
         return t.all()
+    def get_normal_tags(self):
+        return [ t for t in self.get_tags() if not t.name.startswith("--") ]
 
     def is_public(self) -> bool:
         return (self.public_checkout is not None)
@@ -231,7 +233,7 @@ class Chal(models.Model):
 
     # For the admin list
     def tags_str(self) -> str:
-        return ' '.join(str(t) for t in self.get_tags())
+        return ' '.join(str(t) for t in self.get_normal_tags())
     def owner_name(self) -> str:
         return self.owner_user.username
     def has_source_url(self) -> bool:
@@ -307,6 +309,8 @@ class ChalCheckout(models.Model):
         return f"{self.chal.get_absolute_url()}{self.id}/"
     def get_tags(self):
         return self.tags.union(self.chal.extra_tags.all()).all()
+    def get_normal_tags(self):
+        return [ t for t in self.get_tags() if not t.name.startswith("--") ]
     def public_git_clone_cmd(self) -> str:
         # TODO: submodules if actually present + used
         if (self.chal.source_url.startswith('https://github.com/')) and not self.dirty_tree:

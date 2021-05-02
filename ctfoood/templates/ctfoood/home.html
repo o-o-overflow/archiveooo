@@ -83,7 +83,7 @@ Your group's private challenges:
         {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
         <br>
         <div class="tags hometags">
-        {% for t in c.get_tags %}
+        {% for t in c.get_normal_tags %}
             <span class="tag">{{ t }}</span>
         {% endfor %}
         </div>
@@ -103,7 +103,7 @@ Your group's private challenges:
         {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
         <br>
         <div class="tags hometags">
-        {% for t in c.get_tags %}
+        {% for t in c.get_normal_tags %}
             <span class="tag">{{ t }}</span>
         {% endfor %}
         </div>
@@ -123,7 +123,7 @@ Your group's private challenges:
         {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
         <br>
         <div class="tags hometags">
-        {% for t in c.get_tags %}
+        {% for t in c.get_normal_tags %}
             <span class="tag">{{ t }}</span>
         {% endfor %}
         </div>
@@ -152,7 +152,7 @@ There are no public challenges yet. Come back soon!
         {% if c.points %}<br><span class="point_value">{{c.points}} points</span>{% endif %}
         <br>
         <div class="tags hometags">
-        {% for t in c.get_tags %}
+        {% for t in c.get_normal_tags %}
             <span class="tag">{{ t }}</span>
         {% endfor %}
         </div>

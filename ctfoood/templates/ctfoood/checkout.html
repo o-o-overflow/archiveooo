@@ -9,7 +9,7 @@
 
 <h1 class="chal_title">{{ chal.format }}&thinsp;-&thinsp;{{ chal.name }}
     <span class="tags">
-    {% for t in checkout.get_tags %}
+    {% for t in checkout.get_normal_tags %}
         <span class="tag">{{ t }}</span>
     {% endfor %}
     </span>
