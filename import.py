@@ -118,7 +118,7 @@ def main():
         elif y == 'dc2019f': solves_url = "https://oooverflow.io/dc-ctf-2019-finals/#game-data"
         elif y == 'dc2020q': solves_url = "https://scoreboard2020.oooverflow.io/#/solves"
         elif y == 'dc2020f': solves_url = "https://oooverflow.io/dc-ctf-2020-finals/#game-data"
-        elif y == 'dc2021q': solves_url = "https://scoreboard2021.oooverflow.io/#/solves"
+        elif y == 'dc2021q': solves_url = "https://scoreboard.ooo/#/solves"
         else: solves_url = ""
 
         source_url = f"https://github.com/o-o-overflow/{y}-{args.chalname}"
