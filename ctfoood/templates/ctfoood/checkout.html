@@ -99,7 +99,7 @@
     {% if chal.pcaps_url %}<a href="{{ chal.pcaps_url }}">download</a>{% endif %}
     {{ chal.pcaps_notice|urlize }}<br>
 {% endif %}
-{% if chal.offline %}This challenge is solved offline, there's no server side component.<br>{% endif %}
+{% if checkout.offline %}This challenge is solved offline, there's no server side component.<br>{% endif %}
 {% if already_solved %}<span class="already_solved">You have already solved this challenge</span>
     {% if user.is_staff %}[<a href="/admin/ctfoood/usersettings/{{ user.usersettings.pk }}/change/">change</a>]{% endif %}
 {% endif %}
