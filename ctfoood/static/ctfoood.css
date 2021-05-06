@@ -51,7 +51,6 @@ h3 { margin-bottom: 5px; }
 h1.chal_title { margin-bottom: 0px; margin-top: 0px; }
 .authors { font-size: 90%;  color: #aaa; }
 
-
 div.main_description, div.extra_description {
     padding: 0.5em 2em;
     /*border: 1px darkred solid;
@@ -138,6 +137,7 @@ code { color: lightgray; font-weight: bold; text-shadow: none; }
 
 .intro { color: darkgray; line-height: 1.3em; margin: 0.5em 0; }
 .already_solved { color: limegreen; }
+.chal-emoji { font-family: emoji, sans-serif; font-size: 1.6em; }
 
 .top_cmds { font-size: 75%; vertical-align: middle; }
 

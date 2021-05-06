@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 import django.urls
 import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 DEFAULT_CACHE_TIME = datetime.timedelta(days=1)
 
@@ -311,6 +311,12 @@ class ChalCheckout(models.Model):
         return self.tags.union(self.chal.extra_tags.all()).all()
     def get_normal_tags(self):
         return [ t for t in self.get_tags() if not t.name.startswith("--") ]
+    def get_emoji(self) -> Optional[str]:
+        emoji_special_tags = [ t.name for t in self.get_tags() if t.name.startswith("--special-emoji-") ]
+        if not emoji_special_tags:
+            return None
+        # assert len(emoji_special_tags) == 1  -->  see clean()
+        return emoji_special_tags[0][len("--special-emoji-"):]
     def public_git_clone_cmd(self) -> str:
         # TODO: submodules if actually present + used
         if (self.chal.source_url.startswith('https://github.com/')) and not self.dirty_tree:
@@ -341,6 +347,18 @@ class ChalCheckout(models.Model):
     def clean(self, *args, **kwargs):
         if self.dockerhub_uri and not self.public:
             raise ValidationError("Our images on dockerhub are always public. Remove and edit manually if appropriate.")
+        # Mimics the special tag handling in scoreboard_frontend
+        # TBH right now only the emoji is used on the archive, so this is a bit overkill
+        special_tags: List[str] = [ t.name for t in self.get_tags() if t.name.startswith("--special-") ]
+        special_attrs = {}
+        for tag in special_tags:
+            kv = tag[len("--special-"):].split('-')  # like: ['emoji','X']
+            if len(kv) != 2:
+                raise ValidationError("Weird special tag '{}' key-value split ends up as {}".format(tag, kv))
+            key = kv[0].strip(); val = kv[1].strip()
+            if (key in special_attrs) and special_attrs[key] != val:
+                raise ValidationError("Special attribute '{}' appears multiple times, first as '{}' now as '{}'".format(key, special_attrs[key], val))
+            special_attrs[key] = val
 
     class Meta:
         ordering = ["-creation_time"]

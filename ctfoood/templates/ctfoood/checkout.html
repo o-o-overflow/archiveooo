@@ -89,6 +89,7 @@
 
 {# TODO: table? #}
 <p class="intro old_game_info">
+{% if checkout.get_emoji %}This challenge was represented as <span class="chal-emoji">{{ checkout.get_emoji }}</span><br>{% endif %}
 {% if chal.points %}<span title="Points awarded at game-end">Points</span>: {{ chal.points|intcomma }}<br>{% endif %}
 {% if chal.solves_n or chal.solves_data %}Was solved by: 
     {{chal.solves_n|default:"?"}}
