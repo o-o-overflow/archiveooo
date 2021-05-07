@@ -347,18 +347,21 @@ class ChalCheckout(models.Model):
     def clean(self, *args, **kwargs):
         if self.dockerhub_uri and not self.public:
             raise ValidationError("Our images on dockerhub are always public. Remove and edit manually if appropriate.")
-        # Mimics the special tag handling in scoreboard_frontend
-        # TBH right now only the emoji is used on the archive, so this is a bit overkill
-        special_tags: List[str] = [ t.name for t in self.get_tags() if t.name.startswith("--special-") ]
-        special_attrs = {}
-        for tag in special_tags:
-            kv = tag[len("--special-"):].split('-')  # like: ['emoji','X']
-            if len(kv) != 2:
-                raise ValidationError("Weird special tag '{}' key-value split ends up as {}".format(tag, kv))
-            key = kv[0].strip(); val = kv[1].strip()
-            if (key in special_attrs) and special_attrs[key] != val:
-                raise ValidationError("Special attribute '{}' appears multiple times, first as '{}' now as '{}'".format(key, special_attrs[key], val))
-            special_attrs[key] = val
+        # REMOVED -- This runs while saving the ChalCheckout, when it still doesn't have an id
+        #            Django returns an error in get_tags(), likely when we access self.chal.extra_tags.all()
+        #              ValueError: "<ChalCheckout: Checkout None, threefactooorx 233851d [2021-05-07 18:00z]>" needs to have a value for field "id" before this many-to-many relationship can be used.
+        ## Mimics the special tag handling in scoreboard_frontend
+        ## TBH right now only the emoji is used on the archive, so this is a bit overkill
+        #special_tags: List[str] = [ t.name for t in self.get_tags() if t.name.startswith("--special-") ]
+        #special_attrs = {}
+        #for tag in special_tags:
+        #    kv = tag[len("--special-"):].split('-')  # like: ['emoji','X']
+        #    if len(kv) != 2:
+        #        raise ValidationError("Weird special tag '{}' key-value split ends up as {}".format(tag, kv))
+        #    key = kv[0].strip(); val = kv[1].strip()
+        #    if (key in special_attrs) and special_attrs[key] != val:
+        #        raise ValidationError("Special attribute '{}' appears multiple times, first as '{}' now as '{}'".format(key, special_attrs[key], val))
+        #    special_attrs[key] = val
 
     class Meta:
         ordering = ["-creation_time"]
