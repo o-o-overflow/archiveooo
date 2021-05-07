@@ -312,6 +312,12 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             assert _clean_name_for_tags(y['service_name']).replace('-','') == chal.get_clean_name_for_tags().replace('-',''), \
                     f"The info.yml service_name ({y['service_name']}) doesn't look like the current chal.name ({chal.name})"
 
+        if not y.get('game_network_info'):
+            logger.warning("No game_network_info, is this service intended to be offline? Mark it as such in the admin interface.")
+        elif y['game_network_info'].get('host') != 'default':
+            logger.error("This challenge specifies a custom host endpoint: %s", y['game_network_info']['host'])
+            logger.info("Full game_network_info: %s", y['game_network_info'])
+
         exposed_port = None
         if os.path.exists(os.path.join(destdir, "service", "Dockerfile")):
             if 'container_port' in y:  # Note that container_port can be != game_port (which we don't need to use, the endpoint is directly the container)
