@@ -119,11 +119,12 @@ def homepage(request):
         for s in search_all.split():
             if not re.match(r'[a-z0-9_-]+\Z', s):
                 return HttpResponseBadRequest("Invalid search query")
-            sQ = Q(name__contains=s)
+            sQ = Q(name__icontains=s)
+            sQ |= Q(extra_tags=s)
             if re.search(r'20[0-9][0-9]', s):
                 sQ |= Q(format__contains=s)
             baseQ &= sQ
-            achievementQ &= Q(name__contains=s)
+            achievementQ &= Q(name__icontains=s)
         messages.success(request, f"Search filter: {baseQ}")
     base_qset = Chal.objects.filter(baseQ)
 
