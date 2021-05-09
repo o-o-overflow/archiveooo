@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.db.models import Q
 from django.db import transaction
 import django.urls
 import collections
@@ -111,7 +112,13 @@ def add_recaptcha_sitekey(ctx):
 @require_safe
 @vary_on_cookie
 def homepage(request):
-    base_qset = Chal.objects
+    search_Q = Q()
+    if 'search' in request.GET:
+        s = request.GET['search'].lower()
+        if not re.match(r'[a-z0-9_-]+\Z', s):
+            return HttpResponseBadRequest("Invalid search query")
+        search_Q = Q(name__contains=s)
+    base_qset = Chal.objects.filter(search_Q)
     own_private_chals = base_qset.filter(owner_user__id=request.user.id, public_checkout=None)\
             .order_by('-id')
     grp_private_chals = base_qset.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
@@ -122,14 +129,14 @@ def homepage(request):
         us = get_settings(request.user)
         public_chals = list(pub.exclude(solved_by=us).order_by('points', '-format', 'name'))
         solved_chals = pub.filter(solved_by=us).order_by('-points', '-format', 'name')
-        own_achievements = us.achievements.all()
-        other_achievements = Achievement.objects.exclude(pk__in=own_achievements)
+        own_achievements = us.achievements.filter(search_Q).all()
+        other_achievements = Achievement.objects.filter(search_Q).exclude(pk__in=own_achievements)
         own_vms = VM.objects.filter(creation_user=request.user, deleted=False).order_by('-id')
     else:
         public_chals = list(pub.order_by('points', '-format', 'name'))
         solved_chals = []
         own_achievements = []
-        other_achievements = Achievement.objects.all()
+        other_achievements = Achievement.objects.filter(search_Q).all()
         own_vms = []
 
     # From the existing order (ponints, format, name) -> push zero-points to the end -> welcomes first
