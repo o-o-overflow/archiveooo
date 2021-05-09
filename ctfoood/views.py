@@ -121,6 +121,8 @@ def homepage(request):
                 return HttpResponseBadRequest("Invalid search query")
             sQ = Q(name__icontains=s)
             sQ |= Q(extra_tags=s)
+            sQ |= Q(public_checkout__authors__icontains=s)
+            sQ |= Q(public_checkout__tags=s)
             if re.search(r'20[0-9][0-9]', s):
                 sQ |= Q(format__contains=s)
             baseQ &= sQ
