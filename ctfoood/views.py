@@ -112,13 +112,21 @@ def add_recaptcha_sitekey(ctx):
 @require_safe
 @vary_on_cookie
 def homepage(request):
-    search_Q = Q()
+    baseQ = Q()
+    achievementQ = Q()
     if 'search' in request.GET:
-        s = request.GET['search'].lower()
-        if not re.match(r'[a-z0-9_-]+\Z', s):
-            return HttpResponseBadRequest("Invalid search query")
-        search_Q = Q(name__contains=s)
-    base_qset = Chal.objects.filter(search_Q)
+        search_all = request.GET['search'].lower()
+        for s in search_all.split():
+            if not re.match(r'[a-z0-9_-]+\Z', s):
+                return HttpResponseBadRequest("Invalid search query")
+            sQ = Q(name__contains=s)
+            if re.search(r'20[0-9][0-9]', s):
+                sQ |= Q(format__contains=s)
+            baseQ &= sQ
+            achievementQ &= Q(name__contains=s)
+        messages.success(request, f"Search filter: {baseQ}")
+    base_qset = Chal.objects.filter(baseQ)
+
     own_private_chals = base_qset.filter(owner_user__id=request.user.id, public_checkout=None)\
             .order_by('-id')
     grp_private_chals = base_qset.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
@@ -129,14 +137,14 @@ def homepage(request):
         us = get_settings(request.user)
         public_chals = list(pub.exclude(solved_by=us).order_by('points', '-format', 'name'))
         solved_chals = pub.filter(solved_by=us).order_by('-points', '-format', 'name')
-        own_achievements = us.achievements.filter(search_Q).all()
-        other_achievements = Achievement.objects.filter(search_Q).exclude(pk__in=own_achievements)
+        own_achievements = us.achievements.filter(achievementQ).all()
+        other_achievements = Achievement.objects.filter(achievementQ).exclude(pk__in=own_achievements)
         own_vms = VM.objects.filter(creation_user=request.user, deleted=False).order_by('-id')
     else:
         public_chals = list(pub.order_by('points', '-format', 'name'))
         solved_chals = []
         own_achievements = []
-        other_achievements = Achievement.objects.filter(search_Q).all()
+        other_achievements = Achievement.objects.filter(achievementQ).all()
         own_vms = []
 
     # From the existing order (ponints, format, name) -> push zero-points to the end -> welcomes first
@@ -163,7 +171,7 @@ def homepage(request):
         "other_achievements": other_achievements,
         "own_vms": own_vms,
     })
-    if request.user.is_authenticated:
+    if request.user.is_authenticated or ('search' in request.GET):
         patch_cache_control(response, max_age=0, must_revalidate=True)
     else:
         patch_cache_control(response, max_age=1800)
