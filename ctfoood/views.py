@@ -111,23 +111,22 @@ def add_recaptcha_sitekey(ctx):
 @require_safe
 @vary_on_cookie
 def homepage(request):
-    own_private_chals = Chal.objects.filter(owner_user__id=request.user.id, public_checkout=None)\
+    base_qset = Chal.objects
+    own_private_chals = base_qset.filter(owner_user__id=request.user.id, public_checkout=None)\
             .order_by('-id')
-    grp_private_chals = Chal.objects.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
+    grp_private_chals = base_qset.filter(owner_group__in=request.user.groups.all(), public_checkout=None)\
             .exclude(owner_user__id=request.user.id).order_by('-id')
+    pub = base_qset.filter(public_checkout__isnull=False)
     if request.user.is_authenticated:
         # Also see the profile page
         us = get_settings(request.user)
-        public_chals = list(Chal.objects.filter(public_checkout__isnull=False)\
-                .exclude(solved_by=us).order_by('points', '-format', 'name'))
-        solved_chals = Chal.objects.filter(public_checkout__isnull=False,
-                solved_by=us).order_by('-points', '-format', 'name')
+        public_chals = list(pub.exclude(solved_by=us).order_by('points', '-format', 'name'))
+        solved_chals = pub.filter(solved_by=us).order_by('-points', '-format', 'name')
         own_achievements = us.achievements.all()
         other_achievements = Achievement.objects.exclude(pk__in=own_achievements)
         own_vms = VM.objects.filter(creation_user=request.user, deleted=False).order_by('-id')
     else:
-        public_chals = list(Chal.objects.filter(public_checkout__isnull=False)\
-                .order_by('points', '-format', 'name'))
+        public_chals = list(pub.order_by('points', '-format', 'name'))
         solved_chals = []
         own_achievements = []
         other_achievements = Achievement.objects.all()
