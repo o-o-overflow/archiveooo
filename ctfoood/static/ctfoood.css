@@ -32,12 +32,20 @@ div.homechal a { font-size: 110%; }
 div.hometags { margin-top: 0.5em; }
 .point_value { color: #aaa; font-size: 90%; }
 
-div.homesearch { margin-left: 2em; }
+div.homesearch { float: right; }
 div.homesearch input[type=text] {
     background-color: #555; color: white;
-    padding: 0.5em; width: 50%; min-width: 10em; }
-div.homesearch input[type=text]::placeholder { color: lightgray; }
-#home-search-submit { padding: 0.3em 0.5em; background-color: #555; color: lightgray; }
+    padding: 0.5em;
+    width: 15em;
+}
+div.homesearch input[type=text]::placeholder { color: #999; }
+#home-search-submit {
+    vertical-align: middle;
+    /*padding: 0.3em 0.5em;*/
+    font-size: 1.5em;
+    color: #888;
+    background-color: inherit; border: none;
+}
 
 .public_file {
     background: linear-gradient(#800, #800a);

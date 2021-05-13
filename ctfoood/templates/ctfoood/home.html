@@ -45,12 +45,11 @@ This is a live, playable archive of DEF CON CTF challenges.
 
 <div class="homesearch">
     <form action="/" method="get" id="home_search_form" role="search">
-    <p><input type="text" placeholder="name, author, tag, year, ..."
+    <input type="text" placeholder="name, author, tag, year, ..."
         pattern="^[a-zA-Z0-9_ -]+$"
         value="{{ previous_search_pattern }}"
         id="search" name="search">
-    <input id="home-search-submit" type="submit" value="Search" onclick="submit_my_form(event)">
-    <span class="helptext">Example: "2019 pwn"</span>
+    <input id="home-search-submit" type="submit" value="search" onclick="submit_my_form(event)" class="material-icons">
     </form>
     {% if previous_search_pattern %}
     <h1>Search results for {{ previous_search_pattern }}</h1>
