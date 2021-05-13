@@ -222,6 +222,9 @@ abbr { text-decoration: none; border-bottom: 1px dotted; }
 .delete_vm_link { cursor: pointer; }
 
 
+/* header img -- maybe put this in the main site css */
+@media (max-width: 500px) { #ooo-big-logo { float: none; display: block; margin: auto; margin-bottom: 1em; } }
+
 
 /*!
  * "Fork me on GitHub" CSS ribbon v0.2.3 | MIT License
