@@ -116,6 +116,8 @@ def homepage(request):
     achievementQ = Q()
     if 'search' in request.GET:
         search_all = request.GET['search'].lower()
+        if not re.match(r'[a-z0-9_ -]+\Z', search_all):  # I'm lazy
+            return HttpResponseBadRequest("Invalid search query")
         for s in search_all.split():
             if not re.match(r'[a-z0-9_-]+\Z', s):
                 return HttpResponseBadRequest("Invalid search query")
@@ -127,8 +129,13 @@ def homepage(request):
                 sQ |= Q(format__contains=s)
             baseQ &= sQ
             achievementQ &= Q(name__icontains=s)
-        messages.success(request, f"Search filter: {baseQ}")
-    base_qset = Chal.objects.filter(baseQ)
+    base_qset = Chal.objects.filter(baseQ).distinct()  # Due to the JOINs, baseQ alone would return duplicate rows
+
+    #if settings.DEBUG:
+    #    messages.success(request, f"Search filter: {baseQ}")
+    #    sq = str(base_qset.query).strip()
+    #    import sqlparse
+    #    messages.success(request, sqlparse.format(sq, reindent=True))
 
     own_private_chals = base_qset.filter(owner_user__id=request.user.id, public_checkout=None)\
             .order_by('-id')
@@ -173,6 +180,7 @@ def homepage(request):
         "own_achievements": own_achievements,
         "other_achievements": other_achievements,
         "own_vms": own_vms,
+        "previous_search_pattern": search_all if ('search' in request.GET) else "",
     })
     if request.user.is_authenticated or ('search' in request.GET):
         patch_cache_control(response, max_age=0, must_revalidate=True)

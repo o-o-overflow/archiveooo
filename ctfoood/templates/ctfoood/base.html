@@ -68,7 +68,7 @@
     {% for message in messages %}
     <p{% if message.tags %} class="{{ message.tags }}"{% endif %}>
         {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Important: {% endif %}
-        {{ message }}
+        {{ message|linebreaksbr }}
     </p>
     {% endfor %}
 </div>
