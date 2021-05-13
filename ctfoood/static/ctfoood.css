@@ -32,6 +32,12 @@ div.homechal a { font-size: 110%; }
 div.hometags { margin-top: 0.5em; }
 .point_value { color: #aaa; font-size: 90%; }
 
+div.homesearch input[type=text] {
+    background-color: #555; color: white;
+    padding: 0.5em; width: 50%; min-width: 10em; }
+div.homesearch input[type=text]::placeholder { color: lightgray; }
+#home-search-submit { padding: 0.3em 0.5em; background-color: #555; color: lightgray; }
+
 .public_file {
     background: linear-gradient(#800, #800a);
     /*background-color: #800;*/

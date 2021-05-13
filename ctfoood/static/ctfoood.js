@@ -7,13 +7,13 @@ function find_parent_form(el)
     }
 }
 
-//function submit_my_form(el)
-//{
-//    let f = find_parent_form(el);
-//    f.reportValidity();
-//    if (f.checkValidity())
-//        f.submit();
-//}
+function submit_my_form(el)
+{
+    let f = find_parent_form(el);
+    f.reportValidity();
+    if (f.checkValidity())
+        f.submit();
+}
 
 function recaptcha_register_submit(token)
 {

@@ -116,7 +116,7 @@ def homepage(request):
     achievementQ = Q()
     if 'search' in request.GET:
         search_all = request.GET['search'].lower()
-        if not re.match(r'[a-z0-9_ -]+\Z', search_all):  # I'm lazy
+        if not re.match(r'[a-z0-9_ -]*\Z', search_all):  # I'm lazy
             return HttpResponseBadRequest("Invalid search query")
         for s in search_all.split():
             if not re.match(r'[a-z0-9_-]+\Z', s):

@@ -43,6 +43,21 @@ This is a live, playable archive of DEF CON CTF challenges.
 
 
 
+<div class="homesearch">
+    <form action="/" method="get" id="home_search_form" role="search">
+    <p><input type="text" placeholder="name, author, tag, year, ..."
+        pattern="^[a-zA-Z0-9_ -]+$"
+        value="{{ previous_search_pattern }}"
+        id="search" name="search">
+    <input id="home-search-submit" type="submit" value="Search" onclick="submit_my_form(event)">
+    <span class="helptext">Example: "2019 pwn"</span>
+    </form>
+    {% if previous_search_pattern %}
+    <h1>Search results for {{ previous_search_pattern }}</h1>
+    {% endif %}
+</span>
+
+
 {% if own_private_chals %}
 <div class="private_box private_chals own_private_chals">
 Your own private challenges:
@@ -71,9 +86,11 @@ Your group's private challenges:
 {# XXX: Also see the user-profile view and template #}
 
 {% if public_chals_goodfirst %}
+{% if not previous_search_pattern %}
 <h1 style="margin-bottom: 0.2em;">Start here!
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
+{% endif %}
 <span class="homelist">
 {% for c in public_chals_goodfirst %}
     <div class="homechal">
@@ -91,9 +108,11 @@ Your group's private challenges:
 </span>
 {% endif %}
 {% if public_chals_speedruns %}
+{% if not previous_search_pattern %}
 <h1 style="margin-bottom: 0.2em;">Easy but... can you hack fast?
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
+{% endif %}
 <span class="homelist">
 {% for c in public_chals_speedruns %}
     <div class="homechal">
@@ -111,9 +130,11 @@ Your group's private challenges:
 </span>
 {% endif %}
 {% if public_chals_other %}
+{% if not previous_search_pattern %}
 <h1 style="margin-bottom: 0.2em;">Harder challenges  <!-- Ub3rL33t haxorz chals -->
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
 </h1>
+{% endif %}
 <span class="homelist">
 {% for c in public_chals_other %}
     <div class="homechal">
@@ -132,6 +153,8 @@ Your group's private challenges:
 {% endif %}
 
 {% if public_chals_goodfirst or public_chals_speedruns or public_chals_other %}
+{% elif previous_search_pattern %}
+Try a wider search query?
 {% else %}
 <h1 style="margin-bottom: 0.2em;">No public challenges yet
     {% if user.is_staff %}[ <a href="/admin/ctfoood/chal/">Add/edit</a> ]{% endif %}
@@ -141,8 +164,8 @@ There are no public challenges yet. Come back soon!
 
 
 {% if user.is_authenticated %}
-<h2 style="margin-top: 0.8em;">Solved</h2>
 {% if solved_chals %}
+<h2 style="margin-top: 0.8em;">Solved</h2>
 <span class="homelist">
 {% for c in solved_chals %}
     <div class="homechal solved_chal">
@@ -157,17 +180,19 @@ There are no public challenges yet. Come back soon!
         </div>
     </div>
 {% endfor %}
+{% elif previous_search_pattern %}
 {% else %}
-<p>Nothing? :(</p>
+<p>Nothing solved yet? :(</p>
 {% endif %}
 {% endif %}
 
 
 
+{% if own_achievements or other_achievements %}
 <h1>Achievements
     {% if user.is_staff %}[ <a href="/admin/ctfoood/achievement/">Add/edit</a> ]{% endif %}
 </h1>
-
+{% endif %}
 
 {% if own_achievements %}
 <span class="achievements">
