@@ -51,10 +51,10 @@ This is a live, playable archive of DEF CON CTF challenges.
         id="search" name="search">
     <input id="home-search-submit" type="submit" value="search" onclick="submit_my_form(event)" class="material-icons">
     </form>
-    {% if previous_search_pattern %}
-    <h1>Search results for {{ previous_search_pattern }}</h1>
-    {% endif %}
 </div>
+{% if previous_search_pattern %}
+<h1>Search results for {{ previous_search_pattern }}</h1>
+{% endif %}
 
 
 {% if own_private_chals %}
