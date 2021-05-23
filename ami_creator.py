@@ -41,7 +41,7 @@ def get_ec2_instance_state(instance):
 # spawn an ec2 instance and install IBM sysflow on it, wait for it shut down, then return the Instance object
 def spawn_ec2_with_sysflow():
     ubuntu_ami = find_ubuntu_ami()
-    instance = ec2.create_instances(ImageId=ubuntu_ami, InstanceType='t2.micro', MaxCount=1, MinCount=1, UserData=UserData)[0]
+    instance = ec2.create_instances(ImageId=ubuntu_ami, InstanceType='t2.micro', MaxCount=1, MinCount=1, UserData=UserData, KeyName=settings.AWS_KEYPAIR_NAME)[0]
     logger.debug("Instance %s created, waiting for it to start running...", instance.id)
     instance.wait_until_running()
     logger.debug("Instance %s is running, waiting for its (automatic) shutdown...", instance.id)
@@ -98,6 +98,7 @@ if __name__ == "__main__":
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'archiveooo.settings')
     import django
     django.setup()
+    from django.conf import settings
 
     from ctfoood.spawner import get_ec2, find_ubuntu_ami, find_study_ami, get_study_amis
     ec2 = get_ec2(profile='archiveooo_ami_creator')
