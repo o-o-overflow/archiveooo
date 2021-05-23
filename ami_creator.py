@@ -88,6 +88,7 @@ def delete_old_amis():
 
 if __name__ == "__main__":
     MY_LOCK_FILE = '/run/lock/ami_creator_active.lock'
+    if os.path.exists(MY_LOCK_FILE): os.system("echo '#### LOCK FILE EXISTED, IT SAYS:  #####'; cat " + MY_LOCK_FILE + "; echo; echo") # Just for debugging
     with open(MY_LOCK_FILE, 'x') as lf:
         lf.write("Started at: {}\nPID: {}\nPPID: {}\n".format(time.asctime(), os.getpid(), os.getppid()))
 
