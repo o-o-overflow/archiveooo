@@ -29,6 +29,8 @@ except ImportError:
     pass
 
 
+SECURITY_GROUP_NAME = "ami_creator_vm_sg"
+#security_group_id
 
 
 def get_ec2_instance_state(instance):
@@ -41,7 +43,18 @@ def get_ec2_instance_state(instance):
 # spawn an ec2 instance and install IBM sysflow on it, wait for it shut down, then return the Instance object
 def spawn_ec2_with_sysflow():
     ubuntu_ami = find_ubuntu_ami()
-    instance = ec2.create_instances(ImageId=ubuntu_ami, InstanceType='t2.micro', MaxCount=1, MinCount=1, UserData=UserData, KeyName=settings.AWS_KEYPAIR_NAME)[0]
+    # Security group so we can ssh-in in case of issues
+    sg = ec2.create_security_group(GroupName=SECURITY_GROUP_NAME,
+            Description="security group that allows us to ssh into the VM spawned by ami_creator.py")
+    global security_group_id
+    security_group_id = sg.id
+    response = sg.authorize_ingress(IpPermissions=[
+        {'FromPort': 22, 'ToPort': 22, 'IpProtocol': 'tcp',
+         'IpRanges': ({'CidrIp': '0.0.0.0/0'},)}
+        ])
+    assert response['ResponseMetadata']['HTTPStatusCode'] == 200
+    # Create the VM and wait for it to auto-terminate (see the UserData)
+    instance = ec2.create_instances(ImageId=ubuntu_ami, InstanceType='t2.micro', MaxCount=1, MinCount=1, UserData=UserData, KeyName=settings.AWS_KEYPAIR_NAME, SecurityGroupIds=[sg.id])[0]
     logger.debug("Instance %s created, waiting for it to start running...", instance.id)
     instance.wait_until_running()
     logger.debug("Instance %s is running, waiting for its (automatic) shutdown...", instance.id)
@@ -76,6 +89,9 @@ def create_ami(instance):
 def terminate_instance(instance):
     instance.terminate()
     instance.wait_until_terminated()
+    sg = ec2.SecurityGroup(security_group_id)
+    sg.delete()
+
 
 def delete_old_amis():
     # delete all amis except latest one
