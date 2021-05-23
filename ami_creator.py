@@ -18,6 +18,7 @@ import argparse
 import logging
 import os
 import time
+import datetime
 
 logger = logging.getLogger("OOO")
 logger.setLevel("DEBUG")
@@ -61,6 +62,7 @@ def get_ami_status(image):
 def create_ami(instance):
     logger.debug("Creating the ami from instance %s...", instance)
     creation_time = str(int(time.time()))
+    creation_time_human = datetime.datetime.utcfromtimestamp(int(creation_time)).isoformat()
     image_name = "archiveooo_study_ami_" + creation_time
     image = instance.create_image(Name=image_name)
     image.wait_until_exists()
@@ -68,6 +70,7 @@ def create_ami(instance):
     while get_ami_status(image) != "available":
         time.sleep(60)
     image.create_tags(Tags=[{'Key': 'creation_time', 'Value': creation_time},
+        {'Key': 'creation_time_human', 'Value': creation_time_human},
         {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
 
 def terminate_instance(instance):
