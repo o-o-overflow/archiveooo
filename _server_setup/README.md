@@ -12,7 +12,7 @@
 
 6. Setup AWS EC2. You can have separate accounts for the main site and the periodic cleaner. See [sample IAM policy](./example_ec2_iam_policy.txt).
 
-7. Setup the non-cloudfronted website. See the Apache sample files in this folder.Make sure to expose the static files too: for instance, `ln -sr ctfoood/static/ /var/www/html/` (+ Django's contrib/admin/static/admin/)
+7. Setup the non-cloudfronted website. See the Apache sample files in this folder. Make sure to expose the static files too: for instance, `ln -sr ctfoood/static/ /var/www/html/` (+ Django's contrib/admin/static/admin/)
 
 8. Create an S3 bucket to host public files. Otherwise, create `dockerimg` and `public_files` folders and link them in `/var/www/html/`.
 
