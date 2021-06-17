@@ -4,7 +4,7 @@
 # See settings.py
 
 
-SECRET_KEY = None   # Use one of the many generation options
+SECRET_KEY = None   # Use: python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
 
 DEBUG = False
 

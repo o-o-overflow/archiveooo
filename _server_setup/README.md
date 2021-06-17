@@ -8,11 +8,11 @@
 
 4. Create your `/home/archiveooo/archiveooo/archiveooo/local_settings_outside_git.py` -- see the [example](./sample_local_settings_outside_git.py)
 
-5. Create the Postgres database and user (or use the default local SQLite). Default Ubuntu settings should be fine.
+5. Create the Postgres database and user or use the default local SQLite. Default Ubuntu settings should be fine.
 
 6. Setup AWS EC2. You can have separate accounts for the main site and the periodic cleaner. See [sample IAM policy](./example_ec2_iam_policy.txt).
 
-7. Setup the non-cloudfronted website. Expose static files (for instance, link `/home/archiveooo/archiveooo/ctfoood/static/` to `/var/www/html/static`). See the sample files in this folder.
+7. Setup the non-cloudfronted website. See the Apache sample files in this folder.Make sure to expose the static files too: for instance, `ln -sr ctfoood/static/ /var/www/html/` (+ Django's contrib/admin/static/admin/)
 
 8. Create an S3 bucket to host public files. Otherwise, create `dockerimg` and `public_files` folders and link them in `/var/www/html/`.
 
@@ -24,8 +24,7 @@
 
 12. Optionally, setup AWS CloudFront. Our setup uses Origin cache headers (see the setup in `views.py` and in apache files), forwards all cookies and query strings.
 
-
-The rest is the classic Django site setup:
+13. Classic Django site setup:
 
 ```
 ./manage.py makemigrations
@@ -33,7 +32,5 @@ The rest is the classic Django site setup:
 ./manage.py migrate
 ./manage.py createsuperuser
 ```
+14. Use the admin interface to create a group and add the superuser to it. (Chals are associated to the creator user's group, there's expected to be one.)
 
-Also create a group and add the superuser to it.
-
-Make sure to expose the static files. For instance, `ln -sr ctfoood/static/ /var/www/html/` (and Django's contrib/admin/static/admin/)
