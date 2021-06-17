@@ -32,7 +32,7 @@ def main():
     if args.log_level:
         logger.setLevel(args.log_level)
 
-    assert args.format in ('dc2018q', 'dc2018f', 'dc2019q', 'dc2019f', 'dc2020q', 'dc2020f', 'dc2021q')
+    assert args.format in ('dc2018q', 'dc2018f', 'dc2019q', 'dc2019f', 'dc2020q', 'dc2020f', 'dc2021q', 'dc2021f')
 
     imported = []; failed = []
     for l in args.challs_file:

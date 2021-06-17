@@ -110,7 +110,7 @@ def main():
             myear = re.search(r'dc[0-9]+[qf]', args.pull_from)
             assert myear, "Expecting dcYYYY[qf] in the challenge URL to determine the format"
             y = myear.group(0)
-        assert y in ('dc2018q', 'dc2018f', 'dc2019q', 'dc2019f', 'dc2020q', 'dc2020f', 'dc2021q')
+        assert y in ('dc2018q', 'dc2018f', 'dc2019q', 'dc2019f', 'dc2020q', 'dc2020f', 'dc2021q', 'dc2021f')
 
         if y == 'dc2018q': solves_url = "https://scoreboard2018.oooverflow.io/#/solves"
         elif y == 'dc2018f': solves_url = "https://oooverflow.io/dc-ctf-2018-finals/"
@@ -119,6 +119,7 @@ def main():
         elif y == 'dc2020q': solves_url = "https://scoreboard2020.oooverflow.io/#/solves"
         elif y == 'dc2020f': solves_url = "https://oooverflow.io/dc-ctf-2020-finals/#game-data"
         elif y == 'dc2021q': solves_url = "https://scoreboard.ooo/#/solves"
+        elif y == 'dc2021f': solves_url = "https://oooverflow.io/dc-ctf-2021-finals/#game-data"
         else: solves_url = ""
 
         source_url = f"https://github.com/o-o-overflow/{y}-{args.chalname}"

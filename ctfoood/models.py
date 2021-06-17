@@ -109,6 +109,7 @@ class VMSetup(models.Model):
 # DB models for challenges and their deployments
 
 FORMAT_CHOICES : List[Tuple[str,str]] = [  # TODO get from backend and/or models.IntegerChoiches
+        ('dc2021f', "2021 Finals"),
         ('dc2021q', "2021 Quals"),
         ('dc2020f', "2020 Finals"),
         ('dc2020q', "2020 Quals"),
