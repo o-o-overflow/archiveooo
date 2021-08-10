@@ -8,9 +8,11 @@ import hashlib
 import hmac
 import logging
 import os
+import random
 import re
 import shlex
 import shutil
+import string
 import subprocess
 import tarfile
 import tempfile
@@ -364,6 +366,9 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             chal.full_clean()
             chal.save()
 
+        if flag is None:
+            # XXX: should actually change the model to allow NULL and reject spawning later?
+            flag = "SPECIAL_this_service_has_no_default_flag___" + ''.join(random.choices(string.ascii_lowercase, k=16))
 
         logger.debug("Creating ChalCheckout...")
         checkout = ChalCheckout(chal=chal, cache=destdir,
