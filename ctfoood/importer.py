@@ -102,7 +102,7 @@ def _upload_to_s3(basedir: str, fp: BinaryIO, basename: str, its_sha256: str) ->
     return f"https://s3.{settings.AWS_REGION}.amazonaws.com/{settings.S3_BUCKET}/{s3key}"
 
 
-def run_tester_cmd(path:str, arg:str=None, format=None,
+def run_tester_cmd(path:str, arg:Optional[str]=None, format=None,
         ok_to_replace_with_standard_tester:bool=False,
         real_terminal=False, timeout:Optional[int]=500,
         log_level:str="WARNING",
@@ -222,7 +222,7 @@ def grep_for_exposed_port(service_dir) -> Optional[int]:
 
 
 def do_autopull(chal: Chal, user: User, run_tester:bool=False,
-        pull_from:str=None, pull_branch:str=None, is_autopull:bool=True,
+        pull_from:Optional[str]=None, pull_branch:Optional[str]=None, is_autopull:bool=True,
         real_terminal=False, docker_cleanup=True, make_public:bool=False,
         as_default:bool=False, dockerhub:bool=False,
         tester_log_level:str="WARNING",
