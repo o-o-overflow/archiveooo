@@ -349,7 +349,7 @@ def do_autopull(chal: Chal, user: User, run_tester:bool=False,
             flag = None
 
         violates_flag_format = y.get('violates_flag_format', False)
-        if not re.match(FLAG_RE, flag):
+        if not chal.format.endswith('f') and not re.match(FLAG_RE, flag):
             violates_flag_format = True
 
         chaltype = y.get('type', 'normal')
