@@ -398,8 +398,15 @@ def delete_ooo_vm(vm:VM, raise_exceptions=False) -> Tuple[int,str]:
 
             if vm.security_group_id:
                 all_output += "[*] Deleting the EC2 Security Group\n"
-                sg = ec2.SecurityGroup(vm.security_group_id)
-                sg.delete()
+                try:
+                    sg = ec2.SecurityGroup(vm.security_group_id)
+                    sg.delete()
+                except ec2.meta.client.exceptions.ClientError as error:  # ec2 doesn't have other exception types?
+                    assert error.operation_name == "DeleteSecurityGroup"
+                    if error.response['Error']['Code'] == 'InvalidGroup.NotFound':
+                        all_output += "[-] The security group was auto-deleted? Ignoring.\n"
+                    else:
+                        raise # Ignore anyway?
                 vm.security_group_id = ""
                 vm.save()
 
