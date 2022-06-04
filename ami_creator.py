@@ -17,8 +17,9 @@ runcmd:
 import argparse
 import logging
 import os
-import time
 import datetime
+import time
+import sys
 
 logger = logging.getLogger("OOO")
 logger.setLevel("DEBUG")
@@ -31,6 +32,12 @@ except ImportError:
 
 SECURITY_GROUP_NAME = "ami_creator_vm_sg"
 #security_group_id
+
+
+# XXX: the userscript may get stuck, unclear why (even seen auto-reboots instead of shutdowns!)
+#      give up if this much time has passed before the VM stops itself
+MAX_STOP_TIME_SECONDS = 60*60*2
+
 
 
 def get_ec2_instance_state(instance):
@@ -58,8 +65,17 @@ def spawn_ec2_with_sysflow():
     logger.debug("Instance %s created, waiting for it to start running...", instance.id)
     instance.wait_until_running()
     logger.debug("Instance %s is running, waiting for its (automatic) shutdown...", instance.id)
+
+    # XXX: WTF THIS CAN BE RUNNING FOREVER, UNCLEAR WHY THE USERSCRIPT DOESN'T COMPLETE -> TIMEOUT AND KILL INSTANCE?
+    start_time = time.time()
     while get_ec2_instance_state(instance) != "stopped":
-        #logger.debug("Instance state: %s", get_ec2_instance_state(instance))
+        elapsed = time.time() - start_time
+        if elapsed > MAX_STOP_TIME_SECONDS:
+            logger.critical("WTF, instance state = %s != stopped after %d seconds = %d minutes!", get_ec2_instance_state(instance), elapsed, elapsed // 60)
+            terminate_instance(instance)
+            logger.critical("Something went wrong in spawning instance %s, I destroyed it and cleaned up BUT MUST RUN AGAIN!", instance)
+            return None
+        logger.debug("Instance state: %s (running for %d seconds)", get_ec2_instance_state(instance), elapsed)
         time.sleep(60)
     return ec2.Instance(instance.id)
 
@@ -87,10 +103,13 @@ def create_ami(instance):
         {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
 
 def terminate_instance(instance):
+    logger.debug("Terminating instance %s ...", instance)
     instance.terminate()
     instance.wait_until_terminated()
+    logger.debug("Instance %s terminated, deleting security group...", instance)
     sg = ec2.SecurityGroup(security_group_id)
     sg.delete()
+    logger.debug("Security group %s deleted", security_group_id)
 
 
 def delete_old_amis():
@@ -106,6 +125,8 @@ def delete_old_amis():
 
 
 if __name__ == "__main__":
+    exit_code = 88
+
     MY_LOCK_FILE = '/run/lock/ami_creator_active.lock'
     if os.path.exists(MY_LOCK_FILE): os.system("echo '#### LOCK FILE EXISTED, IT SAYS:  #####'; cat " + MY_LOCK_FILE + "; echo; echo") # Just for debugging
     with open(MY_LOCK_FILE, 'x') as lf:
@@ -130,8 +151,17 @@ if __name__ == "__main__":
         instance = ec2.Instance(id=args.from_this_stopped_instance)
     else:
         instance = spawn_ec2_with_sysflow()
-    create_ami(instance)
-    terminate_instance(instance)
-    delete_old_amis()
+
+    if instance is not None:
+        create_ami(instance)
+        terminate_instance(instance)
+        delete_old_amis()
+        exit_code = 0
+    else:
+        logger.error("TERMINATING WITH ERROR, MUST RUN AGAIN!")
+        # TODO: also schedule re-running in 1 day?
+        exit_code = 46
 
     os.unlink(MY_LOCK_FILE)
+    logger.info("Finished, exiting with code %d", exit_code)
+    sys.exit(exit_code)
