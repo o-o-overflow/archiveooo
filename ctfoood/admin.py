@@ -114,8 +114,8 @@ class ChalCheckoutAdmin(admin.ModelAdmin):
 class VMAdmin(admin.ModelAdmin):
     # TODO: warning that all fields are intended as read-only
     #date_hierarchy = 'creation_time'
-    list_display = ('id', 'deleted', 'ip', 'creation_time','pingback_received', 'checkout')
-    list_filter = ('deleted',)
+    list_display = ('id', 'deleted', 'ip', 'creation_time','study_opted_in','creation_user','pingback_received', 'checkout')
+    list_filter = ('deleted','study_opted_in')
     search_fields = ('ip', 'checkout__chal__name', 'checkout__commit_hash', 'creation_time')
     raw_id_fields = ('vm_setup',)
     autocomplete_fields = ('checkout','credentials','creation_user')
