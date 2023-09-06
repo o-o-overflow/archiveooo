@@ -20,6 +20,7 @@ import os
 import datetime
 import time
 import sys
+import syslog
 
 logger = logging.getLogger("OOO")
 logger.setLevel("DEBUG")
@@ -62,9 +63,9 @@ def spawn_ec2_with_sysflow():
     assert response['ResponseMetadata']['HTTPStatusCode'] == 200
     # Create the VM and wait for it to auto-terminate (see the UserData)
     instance = ec2.create_instances(ImageId=ubuntu_ami, InstanceType='t2.micro', MaxCount=1, MinCount=1, UserData=UserData, KeyName=settings.AWS_KEYPAIR_NAME, SecurityGroupIds=[sg.id])[0]
-    logger.debug("Instance %s created, waiting for it to start running...", instance.id)
+    logger.info("Instance %s created, waiting for it to start running...", instance.id)
     instance.wait_until_running()
-    logger.debug("Instance %s is running, waiting for its (automatic) shutdown...", instance.id)
+    logger.info("Instance %s is running, waiting for its (automatic) shutdown...", instance.id)
 
     # XXX: WTF THIS CAN BE RUNNING FOREVER, UNCLEAR WHY THE USERSCRIPT DOESN'T COMPLETE -> TIMEOUT AND KILL INSTANCE?
     start_time = time.time()
@@ -89,13 +90,13 @@ def get_ami_status(image):
 
 # create ami for spawning containers with study permission
 def create_ami(instance):
-    logger.debug("Creating the ami from instance %s...", instance)
+    logger.info("Creating the ami from instance %s...", instance)
     creation_time = str(int(time.time()))
     creation_time_human = datetime.datetime.utcfromtimestamp(int(creation_time)).isoformat()
     image_name = "archiveooo_study_ami_" + creation_time
     image = instance.create_image(Name=image_name)
     image.wait_until_exists()
-    logger.debug("Waiting for the image (%s) to become available...", image.id)
+    logger.info("Waiting for the image (%s) to become available...", image.id)
     while get_ami_status(image) != "available":
         time.sleep(60)
     image.create_tags(Tags=[{'Key': 'creation_time', 'Value': creation_time},
@@ -103,23 +104,23 @@ def create_ami(instance):
         {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
 
 def terminate_instance(instance):
-    logger.debug("Terminating instance %s ...", instance)
+    logger.info("Terminating instance %s ...", instance)
     instance.terminate()
     instance.wait_until_terminated()
-    logger.debug("Instance %s terminated, deleting security group...", instance)
+    logger.info("Instance %s terminated, deleting security group...", instance)
     sg = ec2.SecurityGroup(security_group_id)
     sg.delete()
-    logger.debug("Security group %s deleted", security_group_id)
+    logger.info("Security group %s deleted", security_group_id)
 
 
 def delete_old_amis():
     # delete all amis except latest one
     latest_image_id = find_study_ami(ec2)
-    logger.debug("Deleting all images except for the latest (%s)", latest_image_id)
+    logger.info("Deleting all images except for the latest (%s)", latest_image_id)
     assert latest_image_id
     for image in get_study_amis(ec2):
         if image.id != latest_image_id:
-            logger.debug("Deleting old auto-generated AMI %s", image.id)
+            logger.info("Deleting old auto-generated AMI %s", image.id)
             image.deregister()
 
 
@@ -131,6 +132,8 @@ if __name__ == "__main__":
     if os.path.exists(MY_LOCK_FILE): os.system("echo '#### LOCK FILE EXISTED, IT SAYS:  #####'; cat " + MY_LOCK_FILE + "; echo; echo") # Just for debugging
     with open(MY_LOCK_FILE, 'x') as lf:
         lf.write("Started at: {}\nPID: {}\nPPID: {}\n".format(time.asctime(), os.getpid(), os.getppid()))
+
+    syslog.syslog("Started")
 
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'archiveooo.settings')
     import django
@@ -158,10 +161,12 @@ if __name__ == "__main__":
         delete_old_amis()
         exit_code = 0
     else:
-        logger.error("TERMINATING WITH ERROR, MUST RUN AGAIN!")
+        logger.critical("TERMINATING WITH ERROR, MUST RUN AGAIN!")
+        syslog.syslog(syslog.LOG_CRIT, "TERMINATING WITH ERROR, MUST RUN AGAIN!")
         # TODO: also schedule re-running in 1 day?
         exit_code = 46
 
     os.unlink(MY_LOCK_FILE)
     logger.info("Finished, exiting with code %d", exit_code)
+    syslog.syslog("Finished, exiting with code %d" % exit_code)
     sys.exit(exit_code)

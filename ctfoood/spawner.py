@@ -12,6 +12,7 @@ import string
 import subprocess
 import time
 import urllib.request
+import datetime
 import boto3
 from functools import lru_cache
 from typing import Tuple, Optional, List, Dict
@@ -95,6 +96,26 @@ runcmd:
 
 
 def find_ubuntu_ami() -> str:
+    # As of September 6 2023 (!) this Ubuntu image may not be available in our region (us-west-2)
+    # We have to copy it to this region before we can actually use it to spawn VMs.
+    # This is annoying...
+
+    # TODO: THIS IS NOT PROPERLY SYNCRHONIZED, THERE MAY BE MULTIPLE IMAGES
+
+    # Let's first see if we already have made a copy today
+    ec2 = get_ec2()
+    for img in get_copied_ubuntu_amis(ec2):
+        logger.debug("copied ubuntu image: %s", img.id)
+        logger.debug("Cached local ubuntu AMI %s created %s", img, img.creation_date)
+        if img.creation_date.startswith(datetime.date.today().isoformat()):
+            # OK, new enough. Let's use it.
+            logger.info("Using the cached local ubuntu AMI %s created %s", img.id, img.creation_date)
+            img.wait_until_exists()  # just in case... still gotta think about sync
+            return img.id
+        else:
+            # Deregister this old AMI (but there may be more!) and go on with finding a new one
+            img.deregister()
+
     PRODUCT = 'com.ubuntu.cloud.daily:server:20.04:amd64'
     DAILY_JSON_URL = 'https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json'
     if os.getenv('XDG_RUNTIME_DIR'):
@@ -138,19 +159,37 @@ def find_ubuntu_ami() -> str:
     latest_ver = p['versions'][latest_ver_num]
     items = latest_ver['items'].values()  # Not sure if item keys are stable. If so, could directly select usww2hs (us-west-2, hvm, ssd?)
     matching = [ x for x in items if x['crsn'] == settings.AWS_REGION ]  # and x['virt'] == 'hvm' and x['root_store'] == 'ssd'
-    assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
-    ami = matching[0]
-    return ami['id']
+
+    # TODO: Not generated anymore on us-west-2?
+    #       Using another region and copying it to our region
+    if not matching:
+        far_ami = sorted(items, key=lambda x: x['crsn'], reverse=True)[0]
+        logger.warning("Latest ubuntu AMI not found in %s, picking from %s instead: %s", settings.AWS_REGION, far_ami['crsn'], far_ami)
+        resp = ec2.meta.client.copy_image(Name='mia_copiata_ubuntu',
+                Description='official image copied to this region by archiveooo scripts',
+                SourceImageId=far_ami['id'],
+                SourceRegion=far_ami['crsn'])
+        assert resp['ResponseMetadata']['HTTPStatusCode'] == 200
+        ami_id = resp['ImageId']
+        img = ec2.Image(ami_id)
+        img.wait_until_exists()
+    else:
+        assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
+        ami_id = matching[0]['id']
+    return ami_id
 
 def get_study_amis(ec2):
     return ec2.images.filter(Owners=['self'],
         Filters=[{'Name':'tag-key','Values':['study_ami_autogen']}])
+def get_copied_ubuntu_amis(ec2):
+    return ec2.images.filter(Owners=['self'],
+        Filters=[{'Name':'name','Values':['mia_copiata_ubuntu']}])
 
-def find_study_ami(ec2) -> str:
+def find_latest_ami(ec2, lister) -> Optional[str]:
     # find the latest study ami
     latest_time = 0
     latest_image = None
-    my_images = get_study_amis(ec2)
+    my_images = lister(ec2)
     for image in my_images:
         if image.tags == None:
             continue
@@ -159,8 +198,13 @@ def find_study_ami(ec2) -> str:
                 if latest_time < int(tag['Value']):
                     latest_time = int(tag['Value'])
                     latest_image = image
-    assert latest_image
-    return latest_image.id
+    if latest_image is not None:
+        return latest_image.id
+
+def find_study_ami(ec2) -> str:
+    study_ami = find_latest_ami(ec2, get_study_amis)
+    assert study_ami
+    return study_ami
 
 
 def get_boto3_session(profile:Optional[str]=None):
