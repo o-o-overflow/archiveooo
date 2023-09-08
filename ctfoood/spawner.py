@@ -114,8 +114,10 @@ def find_ubuntu_ami() -> str:
             return img.id
         else:
             # Deregister this old AMI (but there may be more!) and go on with finding a new one
+            logger.info("Deregistering old copied AMI %s, created on %s", img.id, img.creation_date)
             img.deregister()
 
+    logging.debug("No recent Ubuntu image found, looking for a new one")
     PRODUCT = 'com.ubuntu.cloud.daily:server:20.04:amd64'
     DAILY_JSON_URL = 'https://cloud-images.ubuntu.com/daily/streams/v1/com.ubuntu.cloud:daily:aws.json'
     if os.getenv('XDG_RUNTIME_DIR'):
