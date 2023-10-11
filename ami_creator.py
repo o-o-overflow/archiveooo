@@ -21,6 +21,7 @@ import datetime
 import time
 import sys
 import syslog
+from typing import Optional
 
 logger = logging.getLogger("OOO")
 logger.setLevel("DEBUG")
@@ -32,7 +33,7 @@ except ImportError:
 
 
 SECURITY_GROUP_NAME = "ami_creator_vm_sg"
-#security_group_id
+security_group_id : str
 
 
 # XXX: the userscript may get stuck, unclear why (even seen auto-reboots instead of shutdowns!)
@@ -88,21 +89,38 @@ def get_ami_status(image):
         #return "error"
     return image.state
 
+def find_ami_snapshot(image):
+    l = [ dev for dev in image.block_device_mappings if
+            dev['DeviceName'] == image.root_device_name ]
+    assert len(l) == 1
+    blkdev = l[0]
+    logging.debug("img root device: %s", blkdev)
+    return blkdev['Ebs']['SnapshotId']
+
+
 # create ami for spawning containers with study permission
 def create_ami(instance):
     logger.info("Creating the ami from instance %s...", instance)
     creation_time = str(int(time.time()))
     creation_time_human = datetime.datetime.utcfromtimestamp(int(creation_time)).isoformat()
     image_name = "archiveooo_study_ami_" + creation_time
-    image = instance.create_image(Name=image_name)
+    taglist = [
+        {'Key': 'creation_time', 'Value': creation_time},
+        {'Key': 'creation_time_human', 'Value': creation_time_human},
+        {'Key': 'study_ami_autogen', 'Value': 'autogen'}, ]
+    image = instance.create_image(Name=image_name,
+             TagSpecifications=[
+                  { 'ResourceType': 'snapshot', 'Tags': taglist },
+                  { 'ResourceType': 'image',    'Tags': taglist },
+             ])
     # NOTE: THIS ALSO CREATES A SNAPSHOT, TODO: tag/auto-delete/etc.
     image.wait_until_exists()
     logger.info("Waiting for the image (%s) to become available...", image.id)
     while get_ami_status(image) != "available":
         time.sleep(60)
-    image.create_tags(Tags=[{'Key': 'creation_time', 'Value': creation_time},
-        {'Key': 'creation_time_human', 'Value': creation_time_human},
-        {'Key': 'study_ami_autogen', 'Value': 'autogen'},])
+    image.reload()
+    logger.info("Image now available, root_device: %s (type: %s)", image.root_device_name, image.root_device_type)
+    logger.info("Corresponding snapshot: %s", find_ami_snapshot(image))
 
 def terminate_instance(instance):
     logger.info("Terminating instance %s ...", instance)
@@ -156,6 +174,8 @@ if __name__ == "__main__":
 
     if args.from_this_stopped_instance:
         instance = ec2.Instance(id=args.from_this_stopped_instance)
+        logger.info('Using provided instance: %s (sec groups: %s)', instance, instance.security_groups)
+        security_group_id = instance.security_groups[0]['GroupId']
     else:
         instance = spawn_ec2_with_sysflow()
 

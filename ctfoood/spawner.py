@@ -175,6 +175,9 @@ def find_ubuntu_ami() -> str:
         ami_id = resp['ImageId']
         img = ec2.Image(ami_id)
         img.wait_until_exists(Filters=[{'Name': 'state', 'Values': ['available']}])  # https://github.com/boto/boto3/issues/1234
+        img.reload()
+        assert img.state == 'available'
+        #avevo fatto in passato: while get_ami_status(img) != "available": time.sleep(60)
     else:
         assert len(matching) == 1, "More than one viable Ubuntu AMI? Are there multiple virt and root_store options? {}".format(matching)
         ami_id = matching[0]['id']
