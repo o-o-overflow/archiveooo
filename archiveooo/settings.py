@@ -12,8 +12,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import subprocess
 MY_DOMAIN_NAME = subprocess.check_output('hostname --fqdn',
         shell=True, universal_newlines=True).strip()
-MY_IP4 = subprocess.check_output('dig -4 +short @8.8.8.8 "$(hostname --fqdn)"',
-        shell=True, universal_newlines=True).strip()
+#MY_IP4 = subprocess.check_output('dig -4 +short @8.8.8.8 "$(hostname --fqdn)"',
+#        shell=True, universal_newlines=True).strip()
+# ^ disabled, looks like it can fail? It's always overridden here, the public domain points to cloudflare
 
 
 # Optionally, upload public files and docker images to s3
