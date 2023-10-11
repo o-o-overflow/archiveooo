@@ -150,6 +150,8 @@ if __name__ == "__main__":
     if args.log_level:
         logger.setLevel(args.log_level)
 
+    # TODO: maybe wrap in try/except to auto-delete security group, instance
+
     if args.from_this_stopped_instance:
         instance = ec2.Instance(id=args.from_this_stopped_instance)
     else:
