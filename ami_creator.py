@@ -89,7 +89,8 @@ def get_ami_status(image):
         #return "error"
     return image.state
 
-def find_ami_snapshot(image):
+def find_ami_snapshot(image) -> str:
+    '''Returns the snapshot ID'''
     l = [ dev for dev in image.block_device_mappings if
             dev['DeviceName'] == image.root_device_name ]
     assert len(l) == 1
@@ -119,8 +120,8 @@ def create_ami(instance):
     while get_ami_status(image) != "available":
         time.sleep(60)
     image.reload()
-    logger.info("Image now available, root_device: %s (type: %s)", image.root_device_name, image.root_device_type)
-    logger.info("Corresponding snapshot: %s", find_ami_snapshot(image))
+    logger.debug("Image now available, root_device: %s (type: %s)", image.root_device_name, image.root_device_type)
+    logger.debug("Corresponding snapshot ID: %s", find_ami_snapshot(image))
 
 def terminate_instance(instance):
     logger.info("Terminating instance %s ...", instance)
@@ -141,7 +142,10 @@ def delete_old_amis():
         if image.id != latest_image_id:
             logger.info("Deleting old auto-generated AMI %s", image.id)
             image.deregister()
-            # TODO: Also delete the snapshot!
+            snap_id = find_ami_snapshot(image)
+            snap = ec2.Snapshot(snap_id)
+            logger.info("Deleting the corresponding old snapshot %s", snap.id)
+            snap.delete()
 
 
 
@@ -166,29 +170,35 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--log-level", metavar='LEVEL', default="DEBUG", help="Default: DEBUG")
     parser.add_argument("--from-this-stopped-instance", metavar='INSTANCE_ID')
+    parser.add_argument("--just-delete-old-amis", action='store_true')
     args = parser.parse_args()
     if args.log_level:
         logger.setLevel(args.log_level)
 
-    # TODO: maybe wrap in try/except to auto-delete security group, instance
-
-    if args.from_this_stopped_instance:
-        instance = ec2.Instance(id=args.from_this_stopped_instance)
-        logger.info('Using provided instance: %s (sec groups: %s)', instance, instance.security_groups)
-        security_group_id = instance.security_groups[0]['GroupId']
-    else:
-        instance = spawn_ec2_with_sysflow()
-
-    if instance is not None:
-        create_ami(instance)
-        terminate_instance(instance)
+    if args.just_delete_old_amis:
         delete_old_amis()
         exit_code = 0
     else:
-        logger.critical("TERMINATING WITH ERROR, MUST RUN AGAIN!")
-        syslog.syslog(syslog.LOG_CRIT, "TERMINATING WITH ERROR, MUST RUN AGAIN!")
-        # TODO: also schedule re-running in 1 day?
-        exit_code = 46
+
+        # TODO: maybe wrap in try/except to auto-delete security group, instance
+
+        if args.from_this_stopped_instance:
+            instance = ec2.Instance(id=args.from_this_stopped_instance)
+            logger.info('Using provided instance: %s (sec groups: %s)', instance, instance.security_groups)
+            security_group_id = instance.security_groups[0]['GroupId']
+        else:
+            instance = spawn_ec2_with_sysflow()
+
+        if instance is not None:
+            create_ami(instance)
+            terminate_instance(instance)
+            delete_old_amis()
+            exit_code = 0
+        else:
+            logger.critical("TERMINATING WITH ERROR, MUST RUN AGAIN!")
+            syslog.syslog(syslog.LOG_CRIT, "TERMINATING WITH ERROR, MUST RUN AGAIN!")
+            # TODO: also schedule re-running in 1 day?
+            exit_code = 46
 
     os.unlink(MY_LOCK_FILE)
     logger.info("Finished, exiting with code %d", exit_code)
