@@ -95,6 +95,7 @@ def create_ami(instance):
     creation_time_human = datetime.datetime.utcfromtimestamp(int(creation_time)).isoformat()
     image_name = "archiveooo_study_ami_" + creation_time
     image = instance.create_image(Name=image_name)
+    # NOTE: THIS ALSO CREATES A SNAPSHOT, TODO: tag/auto-delete/etc.
     image.wait_until_exists()
     logger.info("Waiting for the image (%s) to become available...", image.id)
     while get_ami_status(image) != "available":
@@ -122,6 +123,7 @@ def delete_old_amis():
         if image.id != latest_image_id:
             logger.info("Deleting old auto-generated AMI %s", image.id)
             image.deregister()
+            # TODO: Also delete the snapshot!
 
 
 
