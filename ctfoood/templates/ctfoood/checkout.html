@@ -212,6 +212,11 @@
 
 {% if checkout.can_ooo_spawn_vm %}
 <details><summary>Hosted by OOO</summary>
+
+    Currently unavailable.
+{# ####### TODO: Spawning disabled [Jacopo] (Ubuntu 20.04 is not available anymore, we should test and move to a newer version) ################ #}
+{% if false %}
+
 {% if user.is_authenticated %}
     <form action="{% url 'spawn_vm_on_ooo' checkout.id %}" target="_blank" method="post" id="spawn_on_ooo_form">
         {% csrf_token %}
@@ -258,6 +263,7 @@
     Right now we're asking players to <a href="{% url "login" %}?next={{request.path}}">login</a> first.
 {% endif %}
 </details>
+{% endif %}  {# XXX: if false to disable spawning #}
 {% endif %}  {# can_ooo_spawn_vm #}
 </div>
 

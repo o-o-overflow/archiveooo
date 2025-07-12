@@ -312,6 +312,11 @@ def post_push_to_dockerhub(request, checkoutid):
 @never_cache
 @login_required
 def spawn_vm_on_ooo(request, checkoutid):
+
+    ##### TODO: Disabled for now, ubuntu 20.04 is not available anymore. [Jacopo] #####
+    if not request.user.is_staff:
+        raise PermissionDenied
+
     checkout = get_object_or_404(ChalCheckout, id=checkoutid)
     chal = checkout.chal
     private = chal.has_private_access(request.user)

@@ -141,8 +141,8 @@ def delete_old_amis():
     for image in get_study_amis(ec2):
         if image.id != latest_image_id:
             logger.info("Deleting old auto-generated AMI %s", image.id)
-            image.deregister()
             snap_id = find_ami_snapshot(image)
+            image.deregister()  # E' successo che find_ami_snapshot fallisse perche' l'immagine era gia' sparita
             snap = ec2.Snapshot(snap_id)
             logger.info("Deleting the corresponding old snapshot %s", snap.id)
             snap.delete()
