@@ -3,6 +3,12 @@
 {% block title %}Register{% endblock %}
 {% block content %}
 
+
+User registration is currently disabled.
+
+
+{% if false %}
+
   <h2>Register</h2>
   <form method="post" id="register_form">
     {% csrf_token %}
@@ -22,4 +28,8 @@
   </form>
 
   <p>Note: this registration is separate from the qualifier registrations, and is not used for anything else.
+
+{% endif %}
+
+
 {% endblock %}

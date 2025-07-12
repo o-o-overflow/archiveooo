@@ -385,6 +385,9 @@ def delete_vm(request, vmid):
 @never_cache
 def register(request):
     if request.method == 'POST':
+
+        raise PermissionDenied  ### XXX: USER REGISTRATION DISABLED. It would not be useful until we've updated and can run VMs again [Jacopo]
+
         if not valid_recaptcha(request):
             raise PermissionDenied
         form = UserCreationForm(request.POST)
