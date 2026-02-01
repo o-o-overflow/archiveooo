@@ -333,7 +333,7 @@
 <!-- Video box, actually floats right -->
 {% if chal.yt_videoid and not request.user.usersettings.hide_videos %}
     <div class="chal_video">
-        <iframe width="480" height="270" src="https://www.youtube-nocookie.com/embed/{{ chal.yt_videoid }}?modestbranding=1&rel=0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <iframe width="480" height="270" src="https://www.youtube-nocookie.com/embed/{{ chal.yt_videoid }}?modestbranding=1&rel=0" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture; web-share" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="YouTube video player"></iframe>
     </div>
 {% endif %}
 
