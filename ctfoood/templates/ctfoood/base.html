@@ -41,6 +41,7 @@
                 <a style="color: inherit; text-shadow: inherit;" href="https://defcon.org">DEF CON</a>
                 <a style="color: inherit; text-shadow: inherit;" href="https://ctftime.org">CTF</a>
 
+<!-- Disabled
             <span class="top_cmds">[
             {% if user.is_staff %}
             <a href="/admin/">admin</a> | 
@@ -51,6 +52,7 @@
             <a href="{% url "login" %}?next={% firstof request.path '/' %}">login</a> {# TODO #}
             {% endif %}
             ]</span>
+-->
             </h1>
 	    <h2></h2>
         </div>
@@ -83,8 +85,10 @@
 
     <footer><div class="container">
             Powered by the <a href="https://oooverflow.io">Order of the Overflow</a>'s archive system.
+<!-- Disabled
             <a href="{% url "logout" %}">logout</a> |
             <a href="/admin">adm</a> |
+-->
             <a href="mailto:team@oooverflow.io">contact</a> |
             <a href="https://github.com/o-o-overflow/archiveooo/issues">report issues</a>
 	    <!-- Please don't shoot the pianists. -->
